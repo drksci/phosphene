@@ -390,7 +390,7 @@
     if (st && Array.isArray(st.area)) {
       const [r0, c0, r1, c1] = st.area, w = c1 - c0;
       const name = c.component === "Text" && c.variant ? c.variant : c.component;
-      return `<div class="box" style="grid-area:${r0 + 1}/${c0 + 1}/${r1 + 1}/${c1 + 1}">` +
+      return `<div class="box" data-k="${c.component}" style="grid-area:${r0 + 1}/${c0 + 1}/${r1 + 1}/${c1 + 1}">` +
         `${w >= 6 ? `<span class="nm">${esc(name)}</span>` : ""}${node(id, scope)}</div>`;
     }
     return kids(c, scope).map(([i, s]) => placed(i, s)).join("");
