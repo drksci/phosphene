@@ -59,7 +59,7 @@ def test_incremental_stream_reconstructs_full_ui(seed):
         for m in msgs:
             surf.apply(m)
         comps, data = compile_frame(f, rec.roles)
-        assert surf.components == comps
+        assert surf.reachable() == comps
         assert surf.data == data
         assert surf.render(False) and surf.render(True)
 

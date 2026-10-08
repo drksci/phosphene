@@ -220,3 +220,38 @@ def label_sync(f: Frame, model: str = LABELER_MODEL) -> dict | None:
         return None
     text = next((b.text for b in msg.content if b.type == "text"), "")
     return json.loads(text)
+
+
+# ---------------------------------------------------------------------------
+# "claude-code" mode: no API key. Colab exports tasks; an agent session (Claude Code + colab-mcp, with
+# cheap subagents for bulk labeling and a stronger model for review) writes labels back.
+def export_tasks(frames: dict[str, Frame], path: str, proposals: dict[str, dict] | None = None,
+                 disagree_rows: dict[str, list[int]] | None = None) -> int:
+    """One JSON object per line: {id, frame, [proposal, disagree_rows]}. ~1 KB per frame."""
+    with open(path, "w") as fh:
+        for cid, f in frames.items():
+            rec = {"id": cid, "frame": render_for_llm(f)}
+            if proposals and cid in proposals:
+                rec["proposal"] = proposals[cid]
+                rec["disagree_rows"] = (disagree_rows or {}).get(cid, [])[:40]
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    return len(frames)
+
+
+def import_labels(path: str) -> dict[str, dict]:
+    """Reads {id, app, regions} lines; silently skips malformed lines (validate before use)."""
+    out = {}
+    with open(path) as fh:
+        for line in fh:
+            try:
+                rec = json.loads(line)
+                regions = [r for r in rec["regions"] if r.get("role") in ROLE_ID and all(k in r for k in ("r0", "c0", "r1", "c1"))]
+                out[rec["id"]] = {"app": rec.get("app", "other"), "regions": regions}
+            except (json.JSONDecodeError, KeyError, TypeError):
+                continue
+    return out
+
+
+def guide_markdown() -> str:
+    """The labeling instructions as a standalone document (for agent labelers)."""
+    return SYSTEM + "\n\nOutput JSON schema:\n" + json.dumps(SCHEMA, indent=1)

@@ -156,9 +156,13 @@ REVIEW_FRAC = 0.15    #@param {type:"number"}
 N_GOLD = 100          #@param {type:"integer"}
 MAX_USD = 20.0        #@param {type:"number"}
 LABELER = "claude-sonnet-5-5"  #@param ["claude-sonnet-5-5", "claude-haiku-4-5"]
-REVIEWER = "claude-opus-5-5"   #@param ["claude-opus-5-5", "claude-sonnet-5-5"]'''),
-    code('''from google.colab import userdata
-os.environ["ANTHROPIC_API_KEY"] = userdata.get("ANTHROPIC_API_KEY")'''),
+REVIEWER = "claude-opus-5-5"   #@param ["claude-opus-5-5", "claude-sonnet-5-5"]
+#@markdown `api`: Message Batches with your key. `claude-code`: no key — an agent session (Claude Code + colab-mcp)
+#@markdown reads `DATA/tasks_*.jsonl`, labels with cheap subagents, reviews, and writes `DATA/labels_*.jsonl`.
+LABEL_MODE = "claude-code"  #@param ["claude-code", "api"]'''),
+    code('''if LABEL_MODE == "api":
+    from google.colab import userdata
+    os.environ["ANTHROPIC_API_KEY"] = userdata.get("ANTHROPIC_API_KEY")'''),
     code('''#@title Select frames worth paying for
 import glob, json, numpy as np
 from vtcore import load_frames
@@ -180,18 +184,26 @@ est = llm.estimate_cost(sel, LABELER)
 est_review = llm.estimate_cost(sel[: int(len(sel) * REVIEW_FRAC) + N_GOLD], REVIEWER, out_tokens=1500)
 print("labeler:", est); print("reviewer (upper bound):", est_review)
 assert est["usd"] + est_review["usd"] <= MAX_USD, "over budget: lower N_LABEL"'''),
-    code('''#@title Stage 3 · label with the cheap model (Batch API)
+    code('''#@title Stage 3 (claude-code mode) · export tasks, then wait for the agent to write labels
+if LABEL_MODE == "claude-code":
+    n = llm.export_tasks({f"f{i}": frames[i] for i in idx}, f"{DATA}/tasks_label.jsonl")
+    open(f"{DATA}/LABELING_GUIDE.md", "w").write(llm.guide_markdown())
+    print(n, "tasks →", f"{DATA}/tasks_label.jsonl", "· the agent writes", f"{DATA}/labels_label.jsonl")'''),
+    code('''#@title Stage 3 · label with the cheap model (Batch API, or import the agent's labels)
 JOBS = f"{DATA}/jobs.json"
 jobs = json.load(open(JOBS)) if os.path.exists(JOBS) else {}
-reqs = {f"f{i}": llm.labeler_request(frames[i], LABELER) for i in idx}
-if "label" not in jobs:  # resumable: re-running never double-submits
-    job = llm.submit_batch(reqs, max_usd=MAX_USD, est=est)
-    jobs["label"] = {"id": job.id, "ids": job.custom_ids}; json.dump(jobs, open(JOBS, "w"))
-job = llm.BatchJob(jobs["label"]["id"], jobs["label"]["ids"])
-llm.wait_batch(job)
-labels, usage = llm.collect_batch(job)
-pi, po = llm.PRICES[LABELER]
-print(len(labels), "labeled", usage, f"≈ ${0.5 * (usage['input'] * pi + usage['output'] * po + usage['cache_read'] * pi * 0.1) / 1e6:.2f}")'''),
+if LABEL_MODE == "claude-code":
+    labels = llm.import_labels(f"{DATA}/labels_label.jsonl"); print(len(labels), "labels imported")
+else:
+    reqs = {f"f{i}": llm.labeler_request(frames[i], LABELER) for i in idx}
+    if "label" not in jobs:  # resumable: re-running never double-submits
+        job = llm.submit_batch(reqs, max_usd=MAX_USD, est=est)
+        jobs["label"] = {"id": job.id, "ids": job.custom_ids}; json.dump(jobs, open(JOBS, "w"))
+    job = llm.BatchJob(jobs["label"]["id"], jobs["label"]["ids"])
+    llm.wait_batch(job)
+    labels, usage = llm.collect_batch(job)
+    pi, po = llm.PRICES[LABELER]
+    print(len(labels), "labeled", usage, f"≈ ${0.5 * (usage['input'] * pi + usage['output'] * po + usage['cache_read'] * pi * 0.1) / 1e6:.2f}")'''),
     code('''#@title Stage 4 · route disagreements (+ a gold set) to the reviewer
 import random
 from vtm.labeling.select import disagreement
@@ -202,14 +214,23 @@ review_ids = by_dis[: int(len(cheap) * REVIEW_FRAC)]
 rest = [i for i in cheap if i not in set(review_ids)]
 gold_ids = random.Random(0).sample(rest, min(N_GOLD, len(rest)))
 print("review:", len(review_ids), "gold:", len(gold_ids), "median disagreement", np.median([d for d, _ in dis.values()]).round(3))
-if "review" not in jobs:
+if LABEL_MODE == "claude-code":
+    jobs["review"] = {"gold": gold_ids}; json.dump(jobs, open(JOBS, "w"))
+    rpath = f"{DATA}/labels_review.jsonl"
+    if not os.path.exists(rpath):
+        llm.export_tasks({f"f{i}": frames[i] for i in review_ids + gold_ids}, f"{DATA}/tasks_review.jsonl",
+                         proposals=labels, disagree_rows={f"f{i}": dis[i][1] for i in review_ids + gold_ids})
+        raise SystemExit(f"exported review tasks → {DATA}/tasks_review.jsonl; re-run this cell once {rpath} exists")
+    reviewed = llm.import_labels(rpath); print(len(reviewed), "reviews imported")
+elif "review" not in jobs:
     rreqs = {f"f{i}": llm.review_request(frames[i], labels[f"f{i}"], dis[i][1], REVIEWER) for i in review_ids + gold_ids}
     job = llm.submit_batch(rreqs)
     jobs["review"] = {"id": job.id, "ids": job.custom_ids, "gold": gold_ids}; json.dump(jobs, open(JOBS, "w"))
-rjob = llm.BatchJob(jobs["review"]["id"], jobs["review"]["ids"])
-llm.wait_batch(rjob)
-reviewed, rusage = llm.collect_batch(rjob)
-print(len(reviewed), "reviewed", rusage)'''),
+if LABEL_MODE == "api":
+    rjob = llm.BatchJob(jobs["review"]["id"], jobs["review"]["ids"])
+    llm.wait_batch(rjob)
+    reviewed, rusage = llm.collect_batch(rjob)
+    print(len(reviewed), "reviewed", rusage)'''),
     code('''#@title How good is the cheap labeler? (Sonnet vs Opus on the random gold set)
 from vtm.metrics import confusion, report
 gold_ids = jobs["review"]["gold"]

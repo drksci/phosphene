@@ -97,6 +97,28 @@ class Surface:
             return self.get(v["path"], scope)
         return v
 
+    def reachable(self) -> dict[str, dict]:
+        """Components reachable from root (incl. list templates). updateComponents only upserts, so
+        components a newer tree no longer references linger in the buffer; they never render."""
+        seen, stack = {}, ["root"]
+        while stack:
+            cid = stack.pop()
+            c = self.components.get(cid)
+            if c is None or cid in seen:
+                continue
+            seen[cid] = c
+            ch = c.get("children")
+            if isinstance(ch, list):
+                stack.extend(ch)
+            elif isinstance(ch, dict):
+                stack.append(ch["componentId"])
+            if "child" in c:
+                stack.append(c["child"])
+        return seen
+
+    def gc(self) -> None:
+        self.components = self.reachable()
+
     # -----------------------------------------------------------------------
     def render(self, faithful: bool = False) -> str:
         body = self._render("root", None, faithful) if "root" in self.components else ""
