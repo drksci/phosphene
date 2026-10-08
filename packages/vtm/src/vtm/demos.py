@@ -43,7 +43,7 @@ APPS = {  # label: (description, regexes that must all appear in the output stre
 
 # where each demo starts: the first settled screen showing the app itself
 SCREEN = {
-    "htop": r"Load average|Tasks: \d+", "vim": r"-- INSERT --|^~\s*$", "mc": r"Left\s+File\s+Command",
+    "htop": r"Load average|Tasks: \d+", "vim": r"(?m)-- INSERT --|VIM - Vi IMproved|^~\s*$", "mc": r"Left\s+File\s+Command",
     "ncdu": r"Total disk usage", "nano": r"GNU nano", "top": r"PID\s+USER", "dialog": r"<\s*OK\s*>|< Yes >|<Cancel>",
     "tig": r"\[main\]|\[log\]|\[status\]|\[diff\]", "emacs": r"-UU[U-]?:|Fundamental|\(Lisp Interaction\)",
     "less": r"\(END\)|lines \d+-\d+", "tmux": r"\[\d+\] \d+:",
