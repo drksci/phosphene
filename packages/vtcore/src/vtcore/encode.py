@@ -124,7 +124,7 @@ def _cname(i: int) -> str:
     return "def" if i == DEFAULT_COLOR else "other"
 
 
-def render_for_llm(f: Frame, max_style_runs: int = 60) -> str:
+def render_for_llm(f: Frame, max_style_runs: int = 150) -> str:
     """Rows prefixed with a 2-digit index (so the LLM can cite rows/cols exactly), a column ruler,
     and a compact list of styled spans (reverse / bg colour / fg colour / bold) on the side."""
     h, w = f.shape

@@ -32,7 +32,8 @@ ROLE_GUIDE = """\
 blank: empty background (never emit)
 text: plain program output / prose
 prompt: the shell or REPL prompt prefix only (e.g. "user@host:~$ ", "❯ ", ">>> ")
-input: the command typed after a prompt (on the active row AND on earlier history rows), or text in a form field
+input: the command typed after a prompt (on the active row AND on earlier history rows), or text in a form field.
+  Grey autosuggestion text after the cursor (fish/zsh, usually fg=brblack) is NOT typed: label it text.
 border: box-drawing frames, separators, rules (┌─┐ │ +---+ =====)
 title: headings, panel/window titles (including titles embedded in a frame's top edge)
 status_bar: full-width highlighted bar at top/bottom; mode lines; pager status (":", "(END)")
@@ -63,6 +64,10 @@ covering the whole box first, then regions for everything inside it and its titl
 
 Roles:
 {ROLE_GUIDE}
+
+Exact columns matter: take bounds from the ruler and from styled spans (a highlighted item's span is its extent).
+Aligned columns of values (even when produced by a shell command) are table, not text.
+If an app has exited and a live shell prompt is back, the app kind is shell even if the old screen remains.
 
 Also classify the whole screen as one app kind: {", ".join(APP_KINDS)}.
 Respond with JSON only, matching the schema."""

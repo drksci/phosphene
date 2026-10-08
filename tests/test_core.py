@@ -136,3 +136,17 @@ def test_rasterize_clips_input_fill():
                    {"role": "input", "r0": 0, "c0": 2, "r1": 1, "c1": 29}], f.shape, f)
     assert (r[0, 2:4] == ROLE_ID["input"]).all() and (r[0, 4:] == 0).all()
     assert r[1, 2] == ROLE_ID["input"] and (r[1, 3:] == 0).all()
+
+
+def test_agent_session_roundtrip(tmp_path):
+    from vtm.agent_labeling import Session
+
+    frames = {f"f{i}": synth_frames(i)[0][0] for i in range(4)}
+    s = Session(str(tmp_path), frames, chunk=2, review_chunk=2)
+    for k, chunk in enumerate(s.chunks):
+        lines = [json.dumps({"id": c, "app": "shell", "regions": [{"role": "text", "r0": 0, "c0": 0,
+                 "r1": frames[c].shape[0] - 1, "c1": frames[c].shape[1] - 1}]}) for c in chunk]
+        s.save_labels(k, "\n".join(lines))
+    split = s.route_review(2, 1)
+    assert len(split["review"]) == 2 and len(s.load("label")) == 4
+    s.show_review(0)

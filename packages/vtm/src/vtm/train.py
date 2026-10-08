@@ -123,3 +123,11 @@ def export_onnx(model: VTM, path: str | Path, rows: int = 24, cols: int = 80) ->
     axes = {n: {1: "rows", 2: "cols"} for n in names} | {"roles": {1: "rows", 2: "cols"}}
     torch.onnx.export(model, (z, z, z, z, z, z, mask), str(path), input_names=names, output_names=["roles", "app"],
                       dynamic_axes=axes, opset_version=18, dynamo=False)
+
+
+if __name__ == "__main__":  # python -m vtm.train '{"train": [...], "val": [...], "out": "...", "epochs": 5}'
+    import sys
+
+    cfg = json.loads(sys.argv[1])
+    train(cfg["train"], cfg.get("val"), out_dir=cfg["out"], epochs=cfg.get("epochs", 8), batch_size=cfg.get("bs", 16),
+          lr=cfg.get("lr", 2e-3), d=cfg.get("d", 128), layers=cfg.get("layers", 4))
