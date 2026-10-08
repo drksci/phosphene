@@ -98,7 +98,7 @@ def layout_signature(f: Frame, coarse: int = 4) -> str:
     cls = _shape_class(char_ids(f.cp))
     hl = ((f.attr & REVERSE) > 0) | (f.bg != DEFAULT_COLOR)
     h = hashlib.blake2b(digest_size=10)
-    h.update(bytes(f.shape))
+    h.update(f"{f.shape[0]}x{f.shape[1]}".encode())
     for r in range(f.shape[0]):
         row = cls[r].copy()
         row[hl[r]] = ord("R")

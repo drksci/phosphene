@@ -120,3 +120,9 @@ def test_layout_signature_ignores_text_changes():
 def test_synth_cast_roundtrip():
     c = synth_cast(5)
     assert len(list(keyframes(c))) >= 1
+
+
+def test_layout_signature_wide_terminal():
+    vt = VT(300, 4)
+    vt.feed("x" * 10)
+    assert layout_signature(vt.snapshot())
