@@ -1,0 +1,10 @@
+{"id": "f2373", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 54}, {"role": "input", "r0": 0, "c0": 56, "r1": 0, "c1": 59}, {"role": "text", "r0": 0, "c0": 60, "r1": 0, "c1": 73}]}
+{"id": "f2374", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 54}, {"role": "input", "r0": 0, "c0": 56, "r1": 0, "c1": 62}]}
+{"id": "f2404", "app": "installer", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 23, "c1": 50}, {"role": "progress", "r0": 0, "c0": 26, "r1": 0, "c1": 79}, {"role": "progress", "r0": 1, "c0": 51, "r1": 5, "c1": 79}, {"role": "progress", "r0": 7, "c0": 51, "r1": 18, "c1": 79}, {"role": "progress", "r0": 21, "c0": 51, "r1": 23, "c1": 79}]}
+{"id": "f2549", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 7}, {"role": "input", "r0": 0, "c0": 8, "r1": 0, "c1": 18}]}
+{"id": "f2867", "app": "installer", "regions": [{"role": "log", "r0": 0, "c0": 0, "r1": 22, "c1": 119}]}
+{"id": "f2868", "app": "installer", "regions": [{"role": "log", "r0": 0, "c0": 0, "r1": 22, "c1": 119}]}
+{"id": "f2870", "app": "installer", "regions": [{"role": "log", "r0": 0, "c0": 0, "r1": 22, "c1": 119}]}
+{"id": "f2871", "app": "installer", "regions": [{"role": "log", "r0": 0, "c0": 0, "r1": 23, "c1": 119}]}
+{"id": "f3025", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 22}, {"role": "input", "r0": 0, "c0": 23, "r1": 0, "c1": 45}]}
+{"id": "f3259", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 4, "c1": 78}, {"role": "status_bar", "r0": 20, "c0": 0, "r1": 20, "c1": 78}, {"role": "prompt", "r0": 21, "c0": 0, "r1": 21, "c1": 1}, {"role": "input", "r0": 21, "c0": 2, "r1": 21, "c1": 5}]}

@@ -1,0 +1,10 @@
+{"id": "f1994", "app": "shell", "regions": [{"role": "status_bar", "r0": 20, "c0": 0, "r1": 20, "c1": 102}, {"role": "prompt", "r0": 23, "c0": 0, "r1": 23, "c1": 35}, {"role": "prompt", "r0": 24, "c0": 0, "r1": 24, "c1": 1}, {"role": "input", "r0": 24, "c0": 2, "r1": 24, "c1": 6}, {"role": "input", "r0": 25, "c0": 0, "r1": 25, "c1": 10}, {"role": "input", "r0": 26, "c0": 0, "r1": 26, "c1": 17}, {"role": "input", "r0": 27, "c0": 0, "r1": 27, "c1": 11}, {"role": "input", "r0": 28, "c0": 0, "r1": 28, "c1": 1}, {"role": "input", "r0": 29, "c0": 0, "r1": 29, "c1": 14}, {"role": "input", "r0": 30, "c0": 0, "r1": 30, "c1": 13}, {"role": "input", "r0": 31, "c0": 0, "r1": 31, "c1": 17}, {"role": "input", "r0": 32, "c0": 0, "r1": 32, "c1": 3}, {"role": "input", "r0": 33, "c0": 0, "r1": 33, "c1": 3}]}
+{"id": "f2038", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 33}, {"role": "input", "r0": 0, "c0": 35, "r1": 0, "c1": 43}]}
+{"id": "f2157", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 9}, {"role": "input", "r0": 0, "c0": 10, "r1": 0, "c1": 12}]}
+{"id": "f2158", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 9}, {"role": "input", "r0": 0, "c0": 10, "r1": 0, "c1": 19}]}
+{"id": "f2181", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 9}, {"role": "input", "r0": 0, "c0": 10, "r1": 0, "c1": 14}]}
+{"id": "f2255", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 9}, {"role": "input", "r0": 0, "c0": 10, "r1": 0, "c1": 11}]}
+{"id": "f2268", "app": "installer", "regions": [{"role": "log", "r0": 0, "c0": 0, "r1": 23, "c1": 79}]}
+{"id": "f2269", "app": "installer", "regions": [{"role": "log", "r0": 0, "c0": 0, "r1": 23, "c1": 79}]}
+{"id": "f2270", "app": "installer", "regions": [{"role": "log", "r0": 0, "c0": 0, "r1": 23, "c1": 79}]}
+{"id": "f2372", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 54}]}

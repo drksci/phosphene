@@ -1,0 +1,10 @@
+{"id": "f50", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 2, "c1": 69}]}
+{"id": "f53", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 3, "c1": 69}]}
+{"id": "f55", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 4, "c1": 69}]}
+{"id": "f57", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 4, "c1": 69}]}
+{"id": "f58", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 4, "c1": 69}]}
+{"id": "f117", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 9}, {"role": "input", "r0": 0, "c0": 10, "r1": 0, "c1": 20}]}
+{"id": "f129", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 9}, {"role": "input", "r0": 0, "c0": 10, "r1": 0, "c1": 30}]}
+{"id": "f140", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 16}, {"role": "prompt", "r0": 1, "c0": 0, "r1": 1, "c1": 1}, {"role": "input", "r0": 1, "c0": 2, "r1": 1, "c1": 6}]}
+{"id": "f152", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 16}, {"role": "prompt", "r0": 1, "c0": 0, "r1": 1, "c1": 1}, {"role": "input", "r0": 1, "c0": 2, "r1": 1, "c1": 20}, {"role": "prompt", "r0": 2, "c0": 0, "r1": 2, "c1": 13}]}
+{"id": "f217", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 9}, {"role": "input", "r0": 0, "c0": 10, "r1": 0, "c1": 87}, {"role": "table", "r0": 1, "c0": 0, "r1": 4, "c1": 24}, {"role": "prompt", "r0": 5, "c0": 0, "r1": 5, "c1": 9}, {"role": "input", "r0": 5, "c0": 10, "r1": 5, "c1": 88}, {"role": "table", "r0": 6, "c0": 0, "r1": 12, "c1": 24}, {"role": "prompt", "r0": 13, "c0": 0, "r1": 13, "c1": 9}, {"role": "input", "r0": 13, "c0": 10, "r1": 13, "c1": 91}, {"role": "table", "r0": 14, "c0": 0, "r1": 20, "c1": 24}, {"role": "prompt", "r0": 21, "c0": 0, "r1": 21, "c1": 9}]}
