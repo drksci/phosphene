@@ -1,0 +1,84 @@
+/* phosphene replay. Tokens mirror drksci labs-article.css (paper / ink / mute / faint / hair). */
+:root {
+  --paper: #f4f3f0; --ink: #0c0c0b; --mute: #46443f; --faint: #8a8780; --hair: #cbc7be; --dash: #b9b6ad;
+  --term-bg: #121211;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+html, body { height: 100%; background: var(--paper); color: var(--ink); font: 13px/1.4 var(--sans); overflow: hidden; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+#app { position: relative; display: grid; height: 100%;
+  grid-template-rows: auto minmax(96px, 1fr) minmax(0, 3fr) 18px; }
+
+/* ── bar ─────────────────────────────────────────────── */
+#bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0;
+  border-bottom: 1px solid var(--hair); font: 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+#recs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+#recs button { padding: 4px 9px; color: var(--faint); white-space: nowrap; border: 1px solid transparent; }
+#recs button:hover { color: var(--mute); }
+#recs button.on { color: var(--ink); border-color: var(--ink); }
+#ctl { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+#bytes { color: var(--mute); font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+#bytes b { color: var(--ink); font-weight: 600; }
+#play { width: 24px; height: 24px; border: 1px solid var(--ink); font-size: 9px; }
+#clock { color: var(--mute); min-width: 4.5ch; font-variant-numeric: tabular-nums; }
+.seg { display: flex; border: 1px solid var(--hair); }
+.seg button { padding: 3px 8px; color: var(--faint); }
+.seg button.on { background: var(--ink); color: var(--paper); }
+
+/* ── pipeline row (top quarter) ──────────────────────── */
+#pipe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; padding: 10px 0 12px; min-height: 0; }
+.st { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 6px; min-width: 0; min-height: 0; position: relative; }
+.st + .st::before { content: "→"; position: absolute; left: -21px; top: 50%; font: 12px var(--mono); color: var(--faint); }
+.hd { display: flex; justify-content: space-between; gap: 8px; font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.hd b { font-weight: 500; color: var(--ink); }
+.hd .m { color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.mini { width: 100%; height: 100%; min-height: 0; display: block; border: 1px solid var(--hair); background: var(--paper); }
+#a2ui-wrap { overflow: hidden; position: relative; }
+#a2ui { position: absolute; left: 0; top: 0; transform-origin: 0 0; padding: 10px 12px; font: 13px/1.45 var(--sans); }
+
+/* A2UI as a generic client draws it: plain widgets, no terminal */
+#a2ui .Column, #a2ui .List { display: flex; flex-direction: column; gap: 1px; }
+#a2ui .Row { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+#a2ui .Card { border: 1px solid var(--hair); padding: 8px 10px; margin: 4px 0; }
+#a2ui .h3, #a2ui .h4 { font-weight: 600; }
+#a2ui .code { font: 12px/1.45 var(--mono); white-space: pre; }
+#a2ui .caption { font: 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--mute); }
+#a2ui [data-tone=bar] { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 2px 0; color: var(--ink); }
+#a2ui [data-tone=error] { color: #9b1c1c; }
+#a2ui [data-tone=muted], #a2ui [data-tone=prompt] { color: var(--mute); }
+#a2ui .sel { background: var(--ink); color: var(--paper); }
+#a2ui .TextField { font: 12px var(--mono); border-bottom: 1px solid var(--ink); min-width: 18ch; display: inline-block; }
+#a2ui .Button { font: 11px var(--mono); border: 1px solid var(--hair); padding: 1px 6px; }
+#a2ui .Button kbd { font: inherit; font-weight: 700; margin-right: 4px; }
+#a2ui .Progress { display: flex; gap: 8px; align-items: center; font: 11px var(--mono); }
+#a2ui .Progress .track { width: 180px; height: 6px; border: 1px solid var(--ink); position: relative; }
+#a2ui .Progress .fill { position: absolute; inset: 0 auto 0 0; background: var(--ink); }
+#a2ui .Divider { border-top: 1px solid var(--hair); margin: 4px 0; }
+#a2ui .Terminal { font: 11px/1.3 var(--mono); white-space: pre; color: var(--faint); padding: 2px 4px;
+  background: repeating-linear-gradient(135deg, transparent 0 3px, rgba(12, 12, 11, .05) 3px 4px); border-left: 2px solid var(--dash); }
+#a2ui .tag { font: 9px var(--mono); color: var(--faint); text-transform: uppercase; letter-spacing: .08em; }
+
+/* ── console (bottom three quarters) ─────────────────── */
+#stage { position: relative; min-height: 0; border-top: 1px solid var(--ink); }
+#screen { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: var(--term-bg); }
+#legend { position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; flex-wrap: wrap; gap: 2px 12px;
+  font: 10px var(--mono); color: #d9d5cc; text-transform: uppercase; letter-spacing: .05em; pointer-events: none; }
+#legend span { background: rgba(18, 18, 17, .82); padding: 1px 4px; }
+#legend i { display: inline-block; width: 8px; height: 8px; margin-right: 5px; vertical-align: -1px; }
+
+/* ── timeline ────────────────────────────────────────── */
+#timeline { position: relative; cursor: pointer; }
+#ticks { width: 100%; height: 100%; display: block; }
+#head { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink); left: 0; pointer-events: none; }
+#flow { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+@media (max-width: 640px) {
+  #bar { flex-wrap: wrap; }
+  #bytes { display: none; }
+  #pipe { gap: 16px; }
+  .st + .st::before { left: -13px; }
+}

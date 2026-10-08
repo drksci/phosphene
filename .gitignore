@@ -10,3 +10,4 @@ data/
 .ipynb_checkpoints/
 .DS_Store
 !labels/**/*.npz
+packages/player/traces/

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>phosphene · replay</title>
+<link rel="stylesheet" href="player.css?v=4">
+</head>
+<body>
+<div id="app">
+  <header id="bar">
+    <nav id="recs" aria-label="Recordings"></nav>
+    <div id="ctl">
+      <span id="bytes" title="Bytes so far: raw VT stream vs. A2UI stream"></span>
+      <button id="play" aria-label="Play">▶</button>
+      <span id="clock">0:00</span>
+      <div class="seg" id="speed" role="group" aria-label="Speed">
+        <button data-v="1" class="on">1×</button><button data-v="2">2×</button><button data-v="4">4×</button>
+      </div>
+      <div class="seg" id="mode" role="group" aria-label="Console view">
+        <button data-v="grid" class="on">cells</button><button data-v="screen">screen</button><button data-v="roles">roles</button>
+      </div>
+    </div>
+  </header>
+
+  <section id="pipe" aria-label="Pipeline">
+    <div class="st" id="st0">
+      <div class="hd"><b>VT cell grid</b><span class="m" id="m0"></span></div>
+      <canvas class="mini" id="mini0"></canvas>
+    </div>
+    <div class="st" id="st1">
+      <div class="hd"><b>Roles</b><span class="m" id="m1"></span></div>
+      <canvas class="mini" id="mini1"></canvas>
+    </div>
+    <div class="st" id="st2">
+      <div class="hd"><b>A2UI</b><span class="m" id="m2"></span></div>
+      <div class="mini" id="a2ui-wrap"><div id="a2ui"></div></div>
+    </div>
+  </section>
+
+  <main id="stage">
+    <canvas id="screen" aria-label="Terminal screen"></canvas>
+    <div id="legend" hidden></div>
+  </main>
+
+  <div id="timeline" aria-label="Timeline"><canvas id="ticks"></canvas><div id="head"></div></div>
+  <canvas id="flow" aria-hidden="true"></canvas>
+</div>
+<script src="player.js?v=4"></script>
+</body>
+</html>

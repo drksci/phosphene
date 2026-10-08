@@ -150,3 +150,17 @@ def test_agent_session_roundtrip(tmp_path):
     split = s.route_review(2, 1)
     assert len(split["review"]) == 2 and len(s.load("label")) == 4
     s.show_review(0)
+
+
+def test_identity_masking_keeps_geometry():
+    from vtm.trace import Masker, find_identities
+
+    text = "ggoncharov ~/Projects/x on git:main\r\nalice@box-01:~$ ls /home/alice\r\n"
+    names = find_identities(text)
+    assert {"ggoncharov", "alice", "box-01"} <= set(names)
+    vt = VT(60, 3)
+    vt.feed(text)
+    f = vt.snapshot()
+    g = Masker(names).frame(f)
+    assert g.shape == f.shape and "alice" not in "".join(g.lines()) and "ggoncharov" not in "".join(g.lines())
+    assert len(g.row_text(0)) == len(f.row_text(0))

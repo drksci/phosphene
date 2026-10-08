@@ -17,31 +17,45 @@ from vtcore import Cast, keyframes
 from vtcore.frame import Frame
 from vttui import Gateway, Reconciler, TemplateCache, msg_bytes
 
-# identities in prompts and paths: replaced in everything the trace carries (screen text and A2UI)
-_MASKS = [
-    (re.compile(r"\b([A-Za-z][\w.-]{1,31})@([A-Za-z][\w.-]{1,63})"), "user@host"),
-    (re.compile(r"/(home|Users)/[\w.-]+"), r"/\1/user"),
+# identities: user and host names are collected from the whole recording first (prompts, user@host,
+# home paths), then every occurrence is replaced at the same width, in screen text and in A2UI
+_ID_PATTERNS = [
+    re.compile(r"\b([A-Za-z][\w.-]{1,31})@([A-Za-z][\w.-]{1,63})"),
+    re.compile(r"/(?:home|Users)/([\w.-]{2,32})"),
+    re.compile(r"(?m)^\$?\s*([a-z][\w.-]{2,31}) [~/]"),  # zsh/omz style "name ~/path"
 ]
+_KEEP = {"root", "user", "host", "localhost", "home", "users", "www", "git", "admin", "ubuntu", "debian", "docker"}
 
 
-def mask_text(s: str) -> str:
-    for rx, rep in _MASKS:
-        s = rx.sub(rep, s)
-    return s
+def find_identities(text: str) -> list[str]:
+    names = set()
+    for rx in _ID_PATTERNS:
+        for m in rx.finditer(text):
+            names.update(g for g in m.groups() if g)
+    names = {n for n in names if n.lower() not in _KEEP and len(n) >= 3 and not n.isdigit()}
+    return sorted(names, key=len, reverse=True)
 
 
-def _mask_frame(f: Frame) -> Frame:
-    """Same-width masking of the screen text so cell geometry is untouched."""
-    cp = f.cp.copy()
-    for r in range(cp.shape[0]):
-        row = f.row_text(r)
-        new = row
-        for rx, rep in _MASKS:
-            new = rx.sub(lambda m, rep=rep: (m.expand(rep) + " " * len(m.group(0)))[: len(m.group(0))], new)
-        if new != row:
-            cp[r] = [ord(ch) if cp[r, i] != 0 else 0 for i, ch in enumerate(new)]
-    g = Frame(cp, f.fg, f.bg, f.attr, f.cursor, f.t, f.damage, f.rec_id, dict(f.meta))
-    return g
+class Masker:
+    def __init__(self, names: list[str]):
+        self.rx = re.compile("|".join(re.escape(n) for n in names)) if names else None
+
+    def text(self, s: str) -> str:
+        if not self.rx:
+            return s
+        return self.rx.sub(lambda m: ("user" + "x" * len(m.group(0)))[: len(m.group(0))] if len(m.group(0)) <= 4
+                           else ("user" + "·" * len(m.group(0)))[: len(m.group(0))], s)
+
+    def frame(self, f: Frame) -> Frame:
+        if not self.rx:
+            return f
+        cp = f.cp.copy()
+        for r in range(cp.shape[0]):
+            row = f.row_text(r)
+            new = self.text(row)
+            if new != row:
+                cp[r] = [ord(ch) if cp[r, i] != 0 else 0 for i, ch in enumerate(new)]
+        return Frame(cp, f.fg, f.bg, f.attr, f.cursor, f.t, f.damage, f.rec_id, dict(f.meta))
 
 
 def _cells(f: Frame, mask: np.ndarray) -> list[list]:
@@ -72,6 +86,7 @@ def _role_runs(roles: np.ndarray, prev: np.ndarray | None) -> list[list[int]]:
 def export_trace(cast: Cast, segmenter: Callable[[Frame], np.ndarray], title: str = "", max_frames: int = 240,
                  cache: TemplateCache | None = None) -> dict:
     gw = Gateway(segmenter, cache=cache)
+    mask = Masker(find_identities("".join(e.data for e in cast.events if e.code == "o")))
     evs = iter(e for e in cast.events if e.code == "o")
     pend = next(evs, None)
     prev_f: Frame | None = None
@@ -82,14 +97,14 @@ def export_trace(cast: Cast, segmenter: Callable[[Frame], np.ndarray], title: st
         while pend is not None and pend.t <= f.t:
             vt += len(pend.data.encode("utf-8", "replace"))
             pend = next(evs, None)
-        f = _mask_frame(f)
+        f = mask.frame(f)
         calls_before = gw.stats.model_calls
         msgs = gw.step(f)
         roles = gw.rec.roles
         full = msg_bytes(Reconciler().step(f, roles))
         changed = np.ones(f.shape, bool) if prev_f is None or prev_f.shape != f.shape else (
             (prev_f.cp != f.cp) | (prev_f.fg != f.fg) | (prev_f.bg != f.bg) | (prev_f.attr != f.attr))
-        shown = [json.loads(mask_text(json.dumps(m, ensure_ascii=False))) for m in msgs]
+        shown = [json.loads(mask.text(json.dumps(m, ensure_ascii=False))) for m in msgs]
         frames.append({
             "t": round(f.t, 3), "shape": list(f.shape), "cursor": list(f.cursor),
             "cells": _cells(f, changed), "roles": _role_runs(roles, prev_roles),
