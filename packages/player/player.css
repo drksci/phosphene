@@ -11,7 +11,7 @@ html, body { height: 100%; background: var(--paper); color: var(--ink); font: 13
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 
 #app { position: relative; display: grid; height: 100%;
-  grid-template-rows: auto minmax(96px, 1fr) minmax(0, 3fr) 18px; }
+  grid-template-rows: auto minmax(96px, 1fr) minmax(0, 3fr) minmax(96px, 1fr) 18px; }
 
 /* ── bar ─────────────────────────────────────────────── */
 #bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0;
@@ -37,38 +37,90 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .hd b { font-weight: 500; color: var(--ink); }
 .hd .m { color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none; letter-spacing: 0; font-variant-numeric: tabular-nums; }
 .mini { width: 100%; height: 100%; min-height: 0; display: block; border: 1px solid var(--hair); background: var(--paper); }
-#a2ui-wrap { overflow: hidden; position: relative; }
-#a2ui { position: absolute; left: 0; top: 0; transform-origin: 0 0; padding: 10px 12px; font: 13px/1.45 var(--sans); }
+#msgs { overflow: hidden; position: relative; padding: 4px 0; font: 10px/1.5 var(--mono); color: var(--mute); }
+#msgs .msg { padding: 0 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity .4s ease, background-color .9s ease; }
+#msgs .msg.new { background: rgba(236, 208, 138, .35); transition: none; }
+#msgs .msg b { font-weight: 600; color: var(--ink); }
+#msgs .msg i { font-style: normal; color: var(--faint); }
 
 /* A2UI as a generic client draws it: plain widgets, no terminal */
-#a2ui .Column, #a2ui .List { display: flex; flex-direction: column; gap: 1px; }
-#a2ui .Row { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
-#a2ui .Card { border: 1px solid var(--hair); padding: 8px 10px; margin: 4px 0; }
-#a2ui .h3, #a2ui .h4 { font-weight: 600; }
-#a2ui .code { font: 12px/1.45 var(--mono); white-space: pre; }
-#a2ui .caption { font: 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--mute); }
-#a2ui [data-tone=bar] { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 2px 0; color: var(--ink); }
-#a2ui [data-tone=error] { color: #9b1c1c; }
-#a2ui [data-tone=muted], #a2ui [data-tone=prompt] { color: var(--mute); }
-#a2ui .sel { background: var(--ink); color: var(--paper); }
-#a2ui .TextField { font: 12px var(--mono); border-bottom: 1px solid var(--ink); min-width: 18ch; display: inline-block; }
-#a2ui .Button { font: 11px var(--mono); border: 1px solid var(--hair); padding: 1px 6px; }
-#a2ui .Button kbd { font: inherit; font-weight: 700; margin-right: 4px; }
-#a2ui .Progress { display: flex; gap: 8px; align-items: center; font: 11px var(--mono); }
-#a2ui .Progress .track { width: 180px; height: 6px; border: 1px solid var(--ink); position: relative; }
-#a2ui .Progress .fill { position: absolute; inset: 0 auto 0 0; background: var(--ink); }
-#a2ui .Divider { border-top: 1px solid var(--hair); margin: 4px 0; }
-#a2ui .Terminal { font: 11px/1.3 var(--mono); white-space: pre; color: var(--faint); padding: 2px 4px;
+:is(#a2ui, .card .ui) .Column, :is(#a2ui, .card .ui) .List { display: flex; flex-direction: column; gap: 1px; }
+:is(#a2ui, .card .ui) .Row { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+:is(#a2ui, .card .ui) .Card { border: 1px solid var(--hair); padding: 8px 10px; margin: 4px 0; }
+:is(#a2ui, .card .ui) .h3, :is(#a2ui, .card .ui) .h4 { font-weight: 600; }
+:is(#a2ui, .card .ui) .code { font: 12px/1.45 var(--mono); white-space: pre; }
+:is(#a2ui, .card .ui) .caption { font: 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--mute); }
+:is(#a2ui, .card .ui) [data-tone=bar] { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 2px 0; color: var(--ink); }
+:is(#a2ui, .card .ui) [data-tone=error] { color: #9b1c1c; }
+:is(#a2ui, .card .ui) [data-tone=muted], :is(#a2ui, .card .ui) [data-tone=prompt] { color: var(--mute); }
+:is(#a2ui, .card .ui) .sel { background: var(--ink); color: var(--paper); }
+:is(#a2ui, .card .ui) .TextField { font: 12px var(--mono); border-bottom: 1px solid var(--ink); min-width: 18ch; display: inline-block; }
+:is(#a2ui, .card .ui) .Button { font: 11px var(--mono); border: 1px solid var(--hair); padding: 1px 6px; }
+:is(#a2ui, .card .ui) .Button kbd { font: inherit; font-weight: 700; margin-right: 4px; }
+:is(#a2ui, .card .ui) .Progress { display: flex; gap: 8px; align-items: center; font: 11px var(--mono); }
+:is(#a2ui, .card .ui) .Progress .track { width: 180px; height: 6px; border: 1px solid var(--ink); position: relative; }
+:is(#a2ui, .card .ui) .Progress .fill { position: absolute; inset: 0 auto 0 0; background: var(--ink); }
+:is(#a2ui, .card .ui) .Divider { border-top: 1px solid var(--hair); margin: 4px 0; }
+:is(#a2ui, .card .ui) .Terminal { font: 11px/1.3 var(--mono); white-space: pre; color: var(--faint); padding: 2px 4px;
   background: repeating-linear-gradient(135deg, transparent 0 3px, rgba(12, 12, 11, .05) 3px 4px); border-left: 2px solid var(--dash); }
-#a2ui .tag { font: 9px var(--mono); color: var(--faint); text-transform: uppercase; letter-spacing: .08em; }
+:is(#a2ui, .card .ui) .tag { font: 9px var(--mono); color: var(--faint); text-transform: uppercase; letter-spacing: .08em; }
 
 /* ── console (bottom three quarters) ─────────────────── */
-#stage { position: relative; min-height: 0; border-top: 1px solid var(--ink); }
+#stage { position: relative; min-height: 0; border-top: 1px solid var(--ink); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+#term, #client { position: relative; min-width: 0; min-height: 0; }
 #screen { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: var(--term-bg); }
+#client { border-left: 1px solid var(--ink); background: var(--paper); }
+#a2ui-wrap { position: absolute; inset: 0; overflow: hidden; }
+#a2ui { position: absolute; inset: 0; padding: 10px; display: grid; font: var(--fs, 11px)/var(--ch, 14px) var(--mono); }
+/* each placed component: its outline is the element boundary a client receives */
+#a2ui .box { position: relative; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid rgba(12, 12, 11, .55);
+  background: rgba(255, 255, 255, .35); }
+#a2ui .box .nm { position: absolute; right: 0; top: 0; z-index: 1; font: 8px/1.3 var(--mono); letter-spacing: .06em;
+  text-transform: uppercase; color: var(--paper); background: rgba(12, 12, 11, .55); padding: 0 3px; pointer-events: none; }
+#a2ui .box :is(.Column, .List) { gap: 0; }
+#a2ui .box .Row { gap: 1ch; flex-wrap: nowrap; }
+#a2ui .box .Card { margin: 0; padding: 0; border: 0; }
+#a2ui .box :is(.Text, .code, .caption, .TextField, .Button, .Progress) { font-size: var(--fs); line-height: var(--ch); white-space: pre; overflow: hidden; text-overflow: clip; }
+#a2ui .box .caption { letter-spacing: 0; text-transform: none; }
+#a2ui .box .Terminal { font-size: var(--fs); line-height: var(--ch); padding: 0; border: 0; }
+#a2ui .box .tag { display: none; }
+#a2ui .box .Progress .track { flex: 1; width: auto; }
+.lbl { position: absolute; z-index: 2; background: var(--paper); padding: 1px 4px; right: 8px; bottom: 5px; font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+#term .lbl { color: #8a8780; background: rgba(18, 18, 17, .82); padding: 1px 4px; }
+#term #legend { right: 150px; }
+.lbl button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--faint); border-bottom: 1px solid var(--hair); }
+.lbl button[aria-pressed=true] { color: var(--ink); border-color: var(--ink); }
+#a2ui [data-c] { transition: background-color .9s ease; }
+#a2ui .fresh { background-color: rgba(236, 208, 138, .45); transition: none; }
+/* wireframe: every component outlined and named, the tree a client receives */
+#a2ui.wire [data-c] { outline: 1px dashed var(--dash); outline-offset: -1px; position: relative; }
+#a2ui.wire .Text, #a2ui.wire .TextField { color: transparent; }
+#a2ui.wire .Text::after { content: ""; position: absolute; left: 0; top: 50%; height: 3px; width: min(100%, var(--w, 60%)); background: var(--hair); transform: translateY(-50%); }
 #legend { position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; flex-wrap: wrap; gap: 2px 12px;
   font: 10px var(--mono); color: #d9d5cc; text-transform: uppercase; letter-spacing: .05em; pointer-events: none; }
 #legend span { background: rgba(18, 18, 17, .82); padding: 1px 4px; }
 #legend i { display: inline-block; width: 8px; height: 8px; margin-right: 5px; vertical-align: -1px; }
+
+/* ── A2UI elements row (same height as the pipeline row) ─ */
+#elems { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 6px; padding: 10px 0 8px; min-height: 0; border-top: 1px solid var(--hair); }
+#elems .hd { align-items: center; }
+#elems .hd .m { flex: 1; }
+#elems .seg button { padding: 1px 7px; font: 10px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+#cards { display: flex; gap: 10px; overflow-x: auto; overflow-y: hidden; min-height: 0; scroll-behavior: smooth;
+  scrollbar-width: thin; scrollbar-color: var(--hair) transparent; padding-bottom: 4px; }
+.card { flex: 0 0 auto; width: clamp(180px, 24%, 300px); display: grid; grid-template-rows: auto minmax(0, 1fr);
+  border: 1px solid var(--hair); background: var(--paper); min-height: 0; transition: border-color .6s ease, box-shadow .6s ease; }
+.card.fresh { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); transition: none; }
+.card .ch { display: flex; justify-content: space-between; gap: 6px; padding: 3px 7px; border-bottom: 1px solid var(--hair);
+  font: 10px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--mute); white-space: nowrap; }
+.card .ch b { color: var(--ink); font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.card .ch i { font-style: normal; color: var(--faint); }
+.card .cb { overflow: hidden; position: relative; min-height: 0; }
+.card .ui { position: absolute; left: 0; top: 0; transform: scale(.78); transform-origin: 0 0; width: 128%; padding: 6px 8px; font: 13px/1.45 var(--sans); }
+.card pre { position: absolute; inset: 0; overflow: auto; padding: 6px 8px; font: 10px/1.45 var(--mono); color: var(--mute); white-space: pre; }
+.card pre .k { color: var(--ink); }
+.card pre .s { color: #3f6f8a; }
+.card::after { content: ""; }
 
 /* ── timeline ────────────────────────────────────────── */
 #timeline { position: relative; cursor: pointer; }
@@ -77,8 +129,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 #flow { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
 @media (max-width: 640px) {
+  #stage { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  #client { border-left: 0; border-top: 1px solid var(--ink); }
   #bar { flex-wrap: wrap; }
   #bytes { display: none; }
   #pipe { gap: 16px; }
+  .card { width: 70%; }
   .st + .st::before { left: -13px; }
 }

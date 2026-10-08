@@ -5,7 +5,9 @@
  * the A2UI messages the gateway emitted. The console is drawn from cell deltas: this page has no VT
  * parser, which is the point.
  *
- * Layout: pipeline row on top (VT cell grid → roles → A2UI), the console below it.
+ * Layout: pipeline row on top (VT cell grid → roles → A2UI stream); the stage split into the VT
+ * screen (native, from cells) and the A2UI client view, in sync; then the A2UI elements
+ * row (each top-level element, rendered or as source, scrollable).
  * Embed protocol (same as the drksci Netscraper player, so the site's SessionEmbed drives it):
  *   in:  {type: "netscraper:play" | "netscraper:pause" | "netscraper:seek", t}
  *   out: {type: "netscraper:ready", duration}, {type: "netscraper:ended"}
@@ -33,7 +35,8 @@
 
   let traces = [], trace = null, F = [], disp = [], total = 0;
   let k = 0, clock = 0, playing = false, speed = 1, mode = "grid", last = 0;
-  let H = 0, W = 0, cp, fg, bg, at, age, roles, cursor = [-1, -1];
+  let H = 0, W = 0, cp, fg, bg, at, age, amp, roles, cursor = [-1, -1];
+  let view = "ui", cardState = new Map(), userScroll = 0, prevText = null;
   let cum = { vt: 0, full: 0, inc: 0 };
   let particles = [];
   let surface = null;
@@ -41,7 +44,7 @@
   // ── loading ───────────────────────────────────────────────────────────────
   async function boot() {
     const idxUrl = new URL(params.get("index") || "traces/index.json", location.href);
-    const idx = await (await fetch(idxUrl)).json();
+    const idx = await (await fetch(idxUrl, { cache: "no-cache" })).json();
     traces = idx.recordings.map((r) => ({ ...r, file: new URL(r.file, idxUrl).href }));
     traces.forEach((r, i) => {
       const b = document.createElement("button");
@@ -81,6 +84,7 @@
     bg = new Uint8Array(H * W).fill(16);
     at = new Uint8Array(H * W);
     age = new Float64Array(H * W).fill(-1e9);
+    amp = new Float32Array(H * W);
     roles = new Uint8Array(H * W);
   }
 
@@ -88,25 +92,32 @@
     const f = F[j];
     if (f.shape[0] !== H || f.shape[1] !== W) reset(f.shape);
     const now = performance.now();
+    // a full redraw (clear screen, app start) lights every cell: keep that glow quiet, keep small edits bright
+    const strength = Math.max(0.18, Math.min(1, 0.12 * H * W / Math.max(f.cells.length, 1)));
     for (const [r, c, ch, f0, b0, a0] of f.cells) {
       const i = r * W + c;
       cp[i] = ch ? ch.codePointAt(0) : 0;
       fg[i] = f0; bg[i] = b0; at[i] = a0;
-      if (live) age[i] = now;
+      if (live) { age[i] = now; amp[i] = strength; }
     }
     for (const [r, c, n, role] of f.roles) roles.fill(role, r * W + c, r * W + c + n);
     cursor = f.cursor;
     cum.vt += f.vt; cum.full += f.full; cum.inc += f.a2ui;
     for (const m of f.msgs) surface.apply(m);
-    if (live) spawn(f);
+    if (live) { spawn(f); logMsgs(f.msgs); }
   }
 
   function seek(target) {
     surface = new Surface();
+    $("msgs").textContent = "";
+    prevText = null;
+    cardState.forEach((st) => st.el.remove());
+    cardState.clear();
     cum = { vt: 0, full: 0, inc: 0 };
     particles = [];
     reset(F[0].shape);
     for (let j = 0; j <= target; j++) apply(j, false);
+    logMsgs(F[target].msgs);
     k = target;
     clock = disp[target];
     metrics();
@@ -161,7 +172,7 @@
     const w = W * s, h = H * s * 1.6;
     return { r, x: (r.width - w) / 2, y: (r.height - h) / 2, cw: s, ch: s * 1.6 };
   }
-  function layout() { drawTicks(); }
+  function layout() { drawTicks(); fitClient(); }
   addEventListener("resize", layout);
 
   // ── console ───────────────────────────────────────────────────────────────
@@ -190,7 +201,7 @@
           } else { ctx.fillStyle = ROLE_TONE[roles[i]] + "60"; ctx.fillRect(x, y, cw + 0.4, ch + 0.4); }
         }
         const g = reduced ? 0 : Math.max(0, 1 - (now - age[i]) / GLOW_MS);
-        if (g > 0 && !grid) { ctx.fillStyle = `rgba(255,236,190,${0.16 * g * g})`; ctx.fillRect(x, y, cw + 0.4, ch + 0.4); }
+        if (g > 0 && !grid) { ctx.fillStyle = `rgba(255,236,190,${0.16 * g * g * amp[i]})`; ctx.fillRect(x, y, cw + 0.4, ch + 0.4); }
         const code = cp[i];
         if (code > 32) {
           ctx.font = `${at[i] & BOLD ? 600 : 400} ${fpx}px ${MONO}`;
@@ -216,7 +227,7 @@
         const g = 1 - (now - age[i]) / GLOW_MS;
         if (g <= 0) continue;
         const x = pad + (i % W) * cw, y = pad + Math.floor(i / W) * ch;
-        ctx.strokeStyle = `rgba(236,208,138,${0.9 * g})`;
+        ctx.strokeStyle = `rgba(236,208,138,${0.9 * g * amp[i]})`;
         ctx.strokeRect(x + 0.5, y + 0.5, cw - 1, ch - 1);
       }
     }
@@ -239,7 +250,7 @@
         let fill = null;
         if (kind === "cells") {
           const g = reduced ? 0 : Math.max(0, 1 - (now - age[i]) / GLOW_MS);
-          if (g > 0) fill = `rgba(12,12,11,${0.3 + 0.7 * g})`;
+          if (g > 0) fill = `rgba(12,12,11,${0.22 + 0.78 * g * amp[i]})`;
           else if (cp[i] > 32) fill = "rgba(12,12,11,.22)";
           else if (bg[i] < 16 || at[i] & REVERSE) fill = "rgba(12,12,11,.10)";
         } else if (roles[i]) {
@@ -248,17 +259,12 @@
         if (fill) { ctx.fillStyle = fill; ctx.fillRect(x + 0.25, y + 0.25, m.cw - gap, m.ch - gap); }
       }
     }
-    // A2UI: scale the rendered client view to the box width
-    const wrap = $("a2ui-wrap").getBoundingClientRect(), el = $("a2ui");
-    const s = Math.min(1, Math.max(0.3, wrap.width / Math.max(el.scrollWidth, 1)));
-    el.style.transform = `scale(${s})`;
-    el.style.width = `${wrap.width / s}px`;
   }
 
   // changed cells lift out of the console and travel across the pipeline row
   function spawn(f) {
     if (reduced || !f.cells.length) return;
-    const n = Math.min(f.cells.length, 36), now = performance.now();
+    const n = Math.min(f.cells.length, f.cells.length > 0.3 * H * W ? 18 : 36), now = performance.now();
     for (let q = 0; q < n; q++) {
       const [r, c] = f.cells[Math.floor((q / n) * f.cells.length)];
       particles.push({ r, c, born: now + Math.random() * 160, role: roles[r * W + c], dur: 1300 / Math.sqrt(speed) });
@@ -272,7 +278,7 @@
     if (!particles.length || !H) return;
     const t = performance.now();
     const con = consoleGeom(), g0 = miniGeom($("mini0")), g1 = miniGeom($("mini1"));
-    const a2 = $("a2ui-wrap").getBoundingClientRect();
+    const a2 = $("msgs").getBoundingClientRect();
     const inMini = (g, r, c) => [g.r.left - app.left + g.x + (c + 0.5) * g.cw, g.r.top - app.top + g.y + (r + 0.5) * g.ch];
     particles = particles.filter((p) => t - p.born < p.dur + 30);
     for (const p of particles) {
@@ -281,7 +287,7 @@
       const stops = [
         [con.r.left - app.left + con.pad + (p.c + 0.5) * con.cw, con.r.top - app.top + con.pad + (p.r + 0.5) * con.ch],
         inMini(g0, p.r, p.c), inMini(g1, p.r, p.c),
-        [a2.left - app.left + 14, a2.top - app.top + Math.min(a2.height - 10, 14 + (p.r / H) * (a2.height - 24))],
+        [a2.left - app.left + 10 + (p.c / W) * 40, a2.top - app.top + 10],
       ];
       // the first hop (console → cell grid) takes half the time; the two pipeline hops share the rest
       const ends = [0.5, 0.75, 1];
@@ -334,29 +340,189 @@
     const c = surface.components[id];
     if (!c) return "";
     const inner = kids(c, scope).map(([i, s]) => node(i, s)).join("");
-    const tone = c.tone ? ` data-tone="${c.tone}"` : "";
+    const tone = (c.tone ? ` data-tone="${c.tone}"` : "") + ` data-c="${c.component}" data-id="${esc(id)}"`;
     switch (c.component) {
       case "Text": {
         const sel = surface.res(c.highlight, scope);
-        return `<div class="Text ${c.variant || "body"}${sel ? " sel" : ""}"${tone}>${esc(surface.res(c.text, scope))}</div>`;
+        const t = String(surface.res(c.text, scope) ?? "");
+        return `<div class="Text ${c.variant || "body"}${sel ? " sel" : ""}"${tone} style="--w:${Math.min(t.trim().length, 80)}ch">${esc(t)}</div>`;
       }
-      case "TextField": return `<span class="TextField">${esc(surface.res(c.value, scope))}▏</span>`;
+      case "TextField": return `<span class="TextField"${tone}>${esc(surface.res(c.value, scope))}▏</span>`;
       case "Progress": {
         const v = surface.res(c.value, scope);
-        return `<div class="Progress"><span class="track"><span class="fill" style="width:${(v ?? 0) * 100}%"></span></span>${v == null ? "" : Math.round(v * 100) + "%"} ${esc(surface.res(c.label, scope))}</div>`;
+        return `<div class="Progress"${tone}><span class="track"><span class="fill" style="width:${(v ?? 0) * 100}%"></span></span>${v == null ? "" : Math.round(v * 100) + "%"} ${esc(surface.res(c.label, scope))}</div>`;
       }
-      case "Button": { const key = surface.res(c.shortcut, scope); return `<span class="Button">${key ? `<kbd>${esc(key)}</kbd>` : ""}${inner}</span>`; }
-      case "Divider": return `<div class="Divider"></div>`;
-      case "Card": return `<div class="Card">${inner}</div>`;
+      case "Button": { const key = surface.res(c.shortcut, scope); return `<span class="Button"${tone}>${key ? `<kbd>${esc(key)}</kbd>` : ""}${inner}</span>`; }
+      case "Divider": return `<div class="Divider"${tone}></div>`;
+      case "Card": return `<div class="Card"${tone}>${inner}</div>`;
       case "Terminal": {
         const rows = surface.res(c.rows, scope) || [];
         const body = rows.map((r) => " ".repeat(Math.min(r.col, 40)) + r.runs.map((x) => x.t).join("")).join("\n");
-        return `<div class="tag">not yet matched · sent as cells</div><div class="Terminal">${esc(body)}</div>`;
+        return `<div${tone}><div class="tag">not yet matched · sent as cells</div><div class="Terminal">${esc(body)}</div></div>`;
       }
-      default: return `<div class="${c.component}">${inner}</div>`;
+      default: return `<div class="${c.component}"${tone}>${inner}</div>`;
     }
   }
-  function renderA2UI() { $("a2ui").innerHTML = surface.components.root ? node("root") : ""; }
+  function renderA2UI() {
+    const el = $("a2ui");
+    el.innerHTML = surface.components.root ? placed("root") : "";
+    // flash the leaf components whose text changed: what a client repaints for this frame
+    const seen = new Map(), text = new Map();
+    for (const n of el.querySelectorAll("[data-c]")) {
+      const id = n.dataset.id, q = (seen.get(id) || 0) + 1;
+      seen.set(id, q);
+      const key = `${id}#${q}`, t = n.textContent;
+      text.set(key, t);
+      if (prevText && prevText.get(key) !== t && !n.querySelector("[data-c]")) n.classList.add("fresh");
+    }
+    prevText = text;
+    requestAnimationFrame(() => requestAnimationFrame(() => el.querySelectorAll(".fresh").forEach((n) => n.classList.remove("fresh"))));
+    fitClient();
+    renderCards();
+  }
+  // The client view uses the style layer: every component that carries a cell rectangle (/s/<id>/area)
+  // is placed on a grid with the terminal's rows and columns, outlined and named, and drawn natively
+  // inside. So the two halves of the stage line up element for element.
+  function placed(id, scope) {
+    const c = surface.components[id];
+    if (!c) return "";
+    const st = surface.get(`/s/${id}`);
+    if (st && Array.isArray(st.area)) {
+      const [r0, c0, r1, c1] = st.area, w = c1 - c0;
+      const name = c.component === "Text" && c.variant ? c.variant : c.component;
+      return `<div class="box" style="grid-area:${r0 + 1}/${c0 + 1}/${r1 + 1}/${c1 + 1}">` +
+        `${w >= 6 ? `<span class="nm">${esc(name)}</span>` : ""}${node(id, scope)}</div>`;
+    }
+    return kids(c, scope).map(([i, s]) => placed(i, s)).join("");
+  }
+  function fitClient() {
+    const wrap = $("a2ui-wrap"), el = $("a2ui");
+    if (!H || !wrap.clientWidth) return;
+    const pad = 10, cw = (wrap.clientWidth - 2 * pad) / W, ch = (wrap.clientHeight - 2 * pad) / H;
+    el.style.gridTemplateColumns = `repeat(${W}, ${cw}px)`;
+    el.style.gridTemplateRows = `repeat(${H}, ${ch}px)`;
+    el.style.setProperty("--ch", `${ch}px`);
+    el.style.setProperty("--fs", `${Math.max(5, Math.min(ch * 0.82, cw / 0.62, 14))}px`);
+  }
+  addEventListener("resize", () => fitClient());
+  $("wire").onclick = () => {
+    const on = $("a2ui").classList.toggle("wire");
+    $("wire").setAttribute("aria-pressed", String(on));
+  };
+
+  // ── A2UI stream: the messages this frame put on the wire, newest first ──
+  function summary(m) {
+    if (m.createSurface) return `<b>createSurface</b> <i>${esc(m.createSurface.surfaceId || "")}</i>`;
+    if (m.updateComponents) {
+      const cs = m.updateComponents.components;
+      return `<b>updateComponents</b> ${cs.length} <i>${esc(cs.slice(0, 4).map((c) => c.component).join(" "))}</i>`;
+    }
+    if (m.updateDataModel) {
+      const b = m.updateDataModel, v = "value" in b ? JSON.stringify(b.value) : "∅";
+      return `<b>updateDataModel</b> ${esc(b.path || "/")} <i>${esc(v.length > 60 ? v.slice(0, 60) + "…" : v)}</i>`;
+    }
+    return esc(JSON.stringify(m).slice(0, 80));
+  }
+  function logMsgs(msgs) {
+    const box = $("msgs");
+    const pick = msgs.length > 10 ? [...msgs.slice(0, 4), null, ...msgs.slice(-5)] : msgs;
+    for (const m of pick.reverse()) {  // newest frame on top, its messages in wire order
+      const d = document.createElement("div");
+      d.className = "msg new";
+      d.innerHTML = m ? `${summary(m)} <i>${kb(JSON.stringify(m).length)}</i>` : `<i>… ${msgs.length - 9} more</i>`;
+      box.prepend(d);
+      requestAnimationFrame(() => requestAnimationFrame(() => d.classList.remove("new")));
+    }
+    while (box.children.length > 24) box.lastChild.remove();
+  }
+
+  // ── A2UI elements row: each top-level element of the surface, rendered or as its source ──
+  function subtree(id, out = []) {
+    const c = surface.components[id];
+    if (!c || out.includes(c)) return out;
+    out.push(c);
+    const x = c.children;
+    if (Array.isArray(x)) x.forEach((i) => subtree(i, out));
+    else if (x && typeof x === "object") subtree(x.componentId, out);
+    if (c.child) subtree(c.child, out);
+    return out;
+  }
+  function boundPaths(v, out) {
+    if (v && typeof v === "object") {
+      if (typeof v.path === "string" && v.path.startsWith("/") && !v.path.startsWith("/s/")) out.add(v.path);
+      for (const x of Object.values(v)) boundPaths(x, out);
+    }
+    return out;
+  }
+  const clip = (v) => Array.isArray(v) && v.length > 4 ? [...v.slice(0, 4), `… ${v.length - 4} more`] : v;
+  function source(id) {
+    const comps = subtree(id).map(({ style, ...c }) => c);
+    const data = {};
+    for (const p of boundPaths(comps, new Set())) data[p] = clip(surface.get(p));
+    const json = JSON.stringify(Object.keys(data).length ? { components: comps, data } : { components: comps }, null, 1)
+      .replace(/\n\s*/g, (m) => "\n" + " ".repeat(Math.max(0, m.length - 2)));
+    return esc(json.length > 2400 ? json.slice(0, 2400) + "\n…" : json)
+      .replace(/(&quot;[^&]*?&quot;)(:)/g, '<span class="k">$1</span>$2')
+      .replace(/(: )(&quot;.*?&quot;)/g, '$1<span class="s">$2</span>');
+  }
+  function label(c, scope) {
+    const n = c.component, items = c.children && !Array.isArray(c.children) ? (surface.get(c.children.path, scope) || []).length : 0;
+    const txt = surface.res(c.text, scope);
+    return [n === "Text" && c.variant ? `${n} · ${c.variant}` : n, items ? `${items} items` : typeof txt === "string" ? txt.trim().slice(0, 24) : c.id];
+  }
+  function renderCards() {
+    const box = $("cards"), root = surface.components.root, now = performance.now();
+    const top = root ? kids(root) : [];
+    const seen = new Set();
+    let firstFresh = null, nFresh = 0;
+    top.forEach(([id, scope], i) => {
+      const c = surface.components[id];
+      if (!c) return;
+      const key = scope === undefined ? id : `${id}#${i}`;
+      seen.add(key);
+      let st = cardState.get(key);
+      if (!st) {
+        const el = document.createElement("div");
+        el.className = "card";
+        el.innerHTML = `<div class="ch"><b></b><i></i></div><div class="cb"></div>`;
+        st = { el, ui: "", src: "", shown: "" };
+        cardState.set(key, st);
+      }
+      const ui = node(id, scope), src = view === "src" ? source(id) : st.src;
+      const changed = st.ui && ui !== st.ui;
+      st.ui = ui; st.src = src;
+      const [name, sub] = label(c, scope);
+      st.el.querySelector("b").textContent = name;
+      st.el.querySelector("i").textContent = sub;
+      const html = view === "src" ? `<pre>${src}</pre>` : `<div class="ui">${ui}</div>`;
+      if (html !== st.shown) { st.el.querySelector(".cb").innerHTML = html; st.shown = html; }
+      if (changed) {
+        nFresh++;
+        firstFresh ??= st.el;
+        st.el.classList.add("fresh");
+        clearTimeout(st.t);
+        st.t = setTimeout(() => st.el.classList.remove("fresh"), 220);
+      }
+      if (box.children[i] !== st.el) box.insertBefore(st.el, box.children[i] || null);
+    });
+    for (const [key, st] of cardState) if (!seen.has(key)) { st.el.remove(); cardState.delete(key); }
+    $("m3").textContent = `${top.length} elements${nFresh ? ` · ${nFresh} updated` : ""}`;
+    // follow the change, unless the reader has been scrolling the row themselves
+    if (firstFresh && now - userScroll > 4000 && playing) {
+      const l = firstFresh.offsetLeft - box.offsetLeft, r = l + firstFresh.offsetWidth;
+      if (l < box.scrollLeft || r > box.scrollLeft + box.clientWidth) box.scrollTo({ left: Math.max(0, l - 12), behavior: reduced ? "auto" : "smooth" });
+    }
+  }
+  $("cards").addEventListener("wheel", (e) => {
+    userScroll = performance.now();
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.preventDefault(); $("cards").scrollLeft += e.deltaY; }
+  }, { passive: false });
+  $("cards").addEventListener("pointerdown", () => { userScroll = performance.now(); });
+  for (const b of $("view").children) b.onclick = () => {
+    view = b.dataset.v;
+    [...$("view").children].forEach((x) => x.classList.toggle("on", x === b));
+    renderCards();
+  };
 
   // ── timeline ──────────────────────────────────────────────────────────────
   function drawTicks() {

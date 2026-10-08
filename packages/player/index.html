@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phosphene · replay</title>
-<link rel="stylesheet" href="player.css?v=4">
+<link rel="stylesheet" href="player.css?v=6">
 </head>
 <body>
 <div id="app">
@@ -33,19 +33,32 @@
       <canvas class="mini" id="mini1"></canvas>
     </div>
     <div class="st" id="st2">
-      <div class="hd"><b>A2UI</b><span class="m" id="m2"></span></div>
-      <div class="mini" id="a2ui-wrap"><div id="a2ui"></div></div>
+      <div class="hd"><b>A2UI stream</b><span class="m" id="m2"></span></div>
+      <div class="mini" id="msgs"></div>
     </div>
   </section>
 
   <main id="stage">
-    <canvas id="screen" aria-label="Terminal screen"></canvas>
-    <div id="legend" hidden></div>
+    <div id="term">
+      <canvas id="screen" aria-label="Terminal screen, drawn from cells"></canvas>
+      <div id="legend" hidden></div>
+      <span class="lbl">VT screen · native</span>
+    </div>
+    <div id="client">
+      <div id="a2ui-wrap"><div id="a2ui"></div></div>
+      <span class="lbl">A2UI client · <button id="wire" aria-pressed="false">wireframe</button></span>
+    </div>
   </main>
+
+  <section id="elems" aria-label="A2UI elements">
+    <div class="hd"><b>A2UI elements</b><span class="m" id="m3"></span>
+      <div class="seg" id="view" role="group" aria-label="Element view"><button data-v="ui" class="on">visual</button><button data-v="src">source</button></div></div>
+    <div id="cards"></div>
+  </section>
 
   <div id="timeline" aria-label="Timeline"><canvas id="ticks"></canvas><div id="head"></div></div>
   <canvas id="flow" aria-hidden="true"></canvas>
 </div>
-<script src="player.js?v=4"></script>
+<script src="player.js?v=6"></script>
 </body>
 </html>

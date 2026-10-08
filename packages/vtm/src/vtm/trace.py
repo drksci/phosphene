@@ -84,7 +84,9 @@ def _role_runs(roles: np.ndarray, prev: np.ndarray | None) -> list[list[int]]:
 
 
 def export_trace(cast: Cast, segmenter: Callable[[Frame], np.ndarray], title: str = "", max_frames: int = 240,
-                 cache: TemplateCache | None = None) -> dict:
+                 cache: TemplateCache | None = None, start: str | None = None) -> dict:
+    """`start`: a regex over the screen text; keyframes before the first match are skipped (the
+    gateway starts cold there, and VT bytes before it are not counted). Times are rebased to it."""
     gw = Gateway(segmenter, cache=cache)
     mask = Masker(find_identities("".join(e.data for e in cast.events if e.code == "o")))
     evs = iter(e for e in cast.events if e.code == "o")
@@ -92,7 +94,17 @@ def export_trace(cast: Cast, segmenter: Callable[[Frame], np.ndarray], title: st
     prev_f: Frame | None = None
     prev_roles = None
     frames = []
-    for f in keyframes(cast, max_frames=max_frames):
+    t0 = None
+    rx = re.compile(start) if start else None
+    for f in keyframes(cast, max_frames=100_000):
+        if len(frames) >= max_frames:
+            break
+        if t0 is None:
+            if rx and not rx.search("\n".join(f.lines())):
+                while pend is not None and pend.t <= f.t:
+                    pend = next(evs, None)
+                continue
+            t0 = f.t if rx else 0.0
         vt = 0
         while pend is not None and pend.t <= f.t:
             vt += len(pend.data.encode("utf-8", "replace"))
@@ -106,7 +118,7 @@ def export_trace(cast: Cast, segmenter: Callable[[Frame], np.ndarray], title: st
             (prev_f.cp != f.cp) | (prev_f.fg != f.fg) | (prev_f.bg != f.bg) | (prev_f.attr != f.attr))
         shown = [json.loads(mask.text(json.dumps(m, ensure_ascii=False))) for m in msgs]
         frames.append({
-            "t": round(f.t, 3), "shape": list(f.shape), "cursor": list(f.cursor),
+            "t": round(f.t - t0, 3), "shape": list(f.shape), "cursor": list(f.cursor),
             "cells": _cells(f, changed), "roles": _role_runs(roles, prev_roles),
             "state": gw.state, "model": gw.stats.model_calls > calls_before,
             "vt": vt, "a2ui": msg_bytes(msgs), "full": full,

@@ -28,7 +28,7 @@ from .train import load, predict
 
 APPS = {  # label: (description, regexes that must all appear in the output stream)
     "htop": ("process monitor", [r"Load average", r"Tasks:", r"F10\s*Quit|F10Quit|Quit"]),
-    "vim": ("editor", [r"-- INSERT --|:wq|:q!", r"\x1b\[\d+;\d+H~"]),
+    "vim": ("editor", [r"-- INSERT --|VIM - Vi IMproved"]),
     "mc": ("Midnight Commander file manager", [r"Left\s+File\s+Command\s+Options\s+Right"]),
     "ncdu": ("disk usage browser", [r"ncdu \d", r"Total disk usage"]),
     "nano": ("editor", [r"GNU nano", r"\^X|Exit"]),
@@ -38,6 +38,15 @@ APPS = {  # label: (description, regexes that must all appear in the output stre
     "emacs": ("editor", [r"-UU[U-]?:|-\*\*-|Fundamental|\(Lisp Interaction\)"]),
     "less": ("pager", [r"\(END\)", r"lines \d+-\d+"]),
     "tmux": ("terminal multiplexer", [r"\x1b\[\d+;1H\x1b\[[\d;]*m\[\d+\] \d+:"]),
+}
+
+
+# where each demo starts: the first settled screen showing the app itself
+SCREEN = {
+    "htop": r"Load average|Tasks: \d+", "vim": r"-- INSERT --|^~\s*$", "mc": r"Left\s+File\s+Command",
+    "ncdu": r"Total disk usage", "nano": r"GNU nano", "top": r"PID\s+USER", "dialog": r"<\s*OK\s*>|< Yes >|<Cancel>",
+    "tig": r"\[main\]|\[log\]|\[status\]|\[diff\]", "emacs": r"-UU[U-]?:|Fundamental|\(Lisp Interaction\)",
+    "less": r"\(END\)|lines \d+-\d+", "tmux": r"\[\d+\] \d+:",
 }
 
 
@@ -56,9 +65,9 @@ def find_demos(paths: list[str], per_app: int = 3) -> dict[str, list[tuple[str, 
     return hits
 
 
-def pick(cands: list[tuple[str, int]]) -> str | None:
-    """Prefer 80-140 col terminals, 20-50 rows, with many settled screens."""
-    best, score = None, -1.0
+def pick(cands: list[tuple[str, int]]) -> list[str]:
+    """Rank candidates: 70-160 col terminals, 18-55 rows, with many settled screens."""
+    ranked = []
     for p, _ in cands[:25]:
         try:
             c = load_cast(p)
@@ -66,11 +75,10 @@ def pick(cands: list[tuple[str, int]]) -> str | None:
             continue
         if not (70 <= c.cols <= 160 and 18 <= c.rows <= 55) or not c.events or c.events[-1].t > 900:
             continue
-        n = sum(1 for _ in keyframes(c, max_frames=200))
-        s = min(n, 160) - abs(c.cols - 100) / 20
-        if n >= 25 and s > score:
-            best, score = p, s
-    return best
+        n = sum(1 for _ in keyframes(c, max_frames=400))
+        if n >= 25:
+            ranked.append((min(n, 300) - abs(c.cols - 100) / 20, p))
+    return [p for _, p in sorted(ranked, reverse=True)]
 
 
 def bench(paths: list[str], seg, n: int) -> dict:
@@ -102,6 +110,7 @@ def bench(paths: list[str], seg, n: int) -> dict:
 
 
 def main(model_path: str, rec_dir: str, out: str, n_bench: int = 200):
+    """N_BENCH = 0 skips the benchmark."""
     t0 = time.time()
     os.makedirs(out, exist_ok=True)
     model = load(model_path, device="cuda")
@@ -111,15 +120,21 @@ def main(model_path: str, rec_dir: str, out: str, n_bench: int = 200):
     print({a: len(h) for a, h in hits.items()}, flush=True)
     index = []
     for app, cands in hits.items():
-        p = pick(cands)
-        if p is None:
+        tr = None
+        for p in pick(cands)[:6]:
+            tr = export_trace(load_cast(p), seg, title=app, max_frames=160, start=SCREEN[app])
+            if len(tr["frames"]) >= 30:
+                break
+            tr = None
+        if tr is None:
             continue
-        tr = export_trace(load_cast(p), seg, title=app, max_frames=160)
         json.dump(tr, open(f"{out}/{app}.json", "w"), separators=(",", ":"))
         index.append({"label": app, "title": f"{app} · {APPS[app][0]}", "file": f"{app}.json", "source": os.path.basename(os.path.dirname(p)),
                       "stats": tr["stats"], "cols": tr["cols"], "rows": tr["rows"]})
         print(app, p, tr["cols"], tr["rows"], len(tr["frames"]), "keyframes", tr["stats"], f"{time.time() - t0:.0f}s", flush=True)
     json.dump({"recordings": index}, open(f"{out}/index.json", "w"), indent=1)
+    if not n_bench:
+        return
     random.Random(7).shuffle(paths)
     b = bench(paths, seg, n_bench)
     json.dump(b, open(f"{out}/bench.json", "w"))
