@@ -1,0 +1,22 @@
+[project]
+name = "vtm"
+version = "0.1.0"
+description = "Virtual Terminal Model: weak + LLM labeling, grid segmentation model, training and export"
+requires-python = ">=3.10"
+dependencies = ["vtcore", "vttui", "numpy>=1.24"]
+
+[project.optional-dependencies]
+train = ["torch>=2.2", "onnx", "onnxscript", "matplotlib", "ipywidgets"]
+data = ["py7zr>=1.0", "huggingface_hub"]
+label = ["anthropic"]
+
+[tool.uv.sources]
+vtcore = { workspace = true }
+vttui = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vtm"]

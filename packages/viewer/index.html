@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>phosphene viewer</title>
+<style>
+  :root { --bg:#0f1115; --panel:#16181d; --line:#2a2f3a; --fg:#d7dae0; --muted:#8b93a1; --accent:#7c9cff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 system-ui, sans-serif; }
+  header { display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line); }
+  header h1 { font-size:15px; margin:0 12px 0 0; letter-spacing:.02em; }
+  button, select, input[type=file] { background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:5px 10px; font:inherit; }
+  input[type=range] { flex:1; min-width:160px; }
+  .stat { color:var(--muted); font-variant-numeric: tabular-nums; font-size:12px; }
+  main { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,380px); gap:16px; padding:16px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  #stage { overflow:auto; }
+  #log { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px; font:11px/1.4 ui-monospace, Menlo, monospace; height:70vh; overflow:auto; white-space:pre-wrap; word-break:break-all; }
+  #log .cmp { color:#f472b6 } #log .data { color:#34d399 } #log .surf { color:#fbbf24 }
+  /* native renderer */
+  .a2ui-native { font-size:14px; background:var(--panel); padding:12px; border-radius:10px; }
+  .a2ui-native .Column, .a2ui-native .List { display:flex; flex-direction:column; gap:2px; }
+  .a2ui-native .Row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; }
+  .a2ui-native .Card { border:1px solid #3a3f4b; border-radius:10px; padding:8px 10px; margin:4px 0; background:#1d2027; }
+  .a2ui-native .h3, .a2ui-native .h4 { font-weight:600; color:#fff; }
+  .a2ui-native .code { font-family:ui-monospace, Menlo, monospace; font-size:12.5px; white-space:pre; }
+  .a2ui-native .caption { font-size:12px; color:#aaa; }
+  .a2ui-native [data-tone=bar] { background:#2b3240; padding:2px 8px; border-radius:4px; }
+  .a2ui-native [data-tone=error] { color:#ff6b6b; } .a2ui-native [data-tone=muted] { color:#9aa; } .a2ui-native [data-tone=prompt] { color:#4ade80; }
+  .a2ui-native .sel { background:#3b82f6; color:#fff; border-radius:4px; }
+  .a2ui-native .TextField { font-family:ui-monospace, monospace; background:#0f1115; border:1px solid #3b82f6; border-radius:4px; padding:1px 6px; min-width:20ch; display:inline-block; }
+  .a2ui-native .Button { background:#2b3240; border-radius:4px; padding:1px 6px; font-size:12px; }
+  .a2ui-native kbd { color:#fbbf24; margin-right:4px; }
+  .a2ui-native progress { width:220px; vertical-align:middle; margin-right:8px; }
+  .a2ui-native .Divider { border-top:1px solid #3a3f4b; margin:4px 0; }
+  /* faithful renderer: positions + colours come from the stream's style layer */
+  .a2ui-term { font:13px/1.25 ui-monospace, Menlo, monospace; position:relative; white-space:pre; overflow:hidden; border-radius:6px; }
+  .a2ui-term .flow { display:contents; }
+  .a2ui-term [data-id] { position:absolute; overflow:hidden; }
+  .a2ui-term .card-frame { border:1px solid currentColor; border-radius:4px; }
+  .a2ui-term .row-item { display:block; height:1.25em; }
+  .a2ui-term .row-item.sel { filter:invert(1); }
+  .empty { color:var(--muted); padding:40px; text-align:center; border:1px dashed var(--line); border-radius:10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>phosphene · A2UI stream viewer</h1>
+  <input type="file" id="file" accept=".jsonl,.json,.txt">
+  <button id="play">▶ play</button>
+  <select id="mode"><option value="faithful">faithful (style layer)</option><option value="native">native A2UI</option></select>
+  <input type="range" id="seek" min="0" max="0" value="0">
+  <span class="stat" id="stat">no stream loaded</span>
+</header>
+<main>
+  <div id="stage"><div class="empty">Drop an <code>.a2ui.jsonl</code> exported by notebook 04, or open <code>?src=URL</code>.</div></div>
+  <div id="log"></div>
+</main>
+<script>
+// Minimal A2UI v0.9 client (+ phosphene catalog extensions: Progress, style, tone, highlight, shortcut).
+const $ = (id) => document.getElementById(id);
+let msgs = [], pos = 0, timer = null;
+let surf = { components: {}, data: {}, theme: null };
+
+const unesc = (s) => s.replace(/~1/g, "/").replace(/~0/g, "~");
+const ptr = (p) => (!p || p === "/") ? [] : p.split("/").slice(1).map(unesc);
+function setPath(path, value, del) {
+  const keys = ptr(path);
+  if (!keys.length) { surf.data = del ? {} : structuredClone(value); return; }
+  let node = surf.data;
+  for (const k of keys.slice(0, -1)) node = Array.isArray(node) ? node[+k] : (node[k] ??= {});
+  const last = keys.at(-1);
+  if (Array.isArray(node)) { const i = +last; if (del) node.splice(i, 1); else node[i] = structuredClone(value); }
+  else if (del) delete node[last]; else node[last] = structuredClone(value);
+}
+function get(path, scope) {
+  let node = path.startsWith("/") || scope === undefined ? surf.data : scope;
+  for (const k of ptr(path.startsWith("/") ? path : "/" + path)) node = node == null ? undefined : node[Array.isArray(node) ? +k : k];
+  return node;
+}
+const resolve = (v, scope) => (v && typeof v === "object" && "path" in v && Object.keys(v).length === 1) ? get(v.path, scope) : v;
+function apply(m) {
+  if (m.createSurface) { surf = { components: {}, data: {}, theme: m.createSurface.theme || null }; }
+  else if (m.updateComponents) for (const c of m.updateComponents.components) surf.components[c.id] = c;
+  else if (m.updateDataModel) { const b = m.updateDataModel; setPath(b.path || "/", b.value, !("value" in b)); }
+}
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function children(c, scope) {
+  const ch = c.children;
+  if (Array.isArray(ch)) return ch.map((id) => [id, scope]);
+  if (ch && typeof ch === "object") return (get(ch.path, scope) || []).map((it) => [ch.componentId, it]);
+  if (c.child) return [[c.child, scope]];
+  return [];
+}
+const col = (t, fb) => t && t !== "default" ? `var(--${t})` : `var(--${fb})`;
+function place(c, st) {
+  if (!st || !st.area) return "";
+  let [r0, c0, r1, c1] = st.area;
+  if (c.component === "Card") { r0 += .5; c0 += .5; r1 -= .5; c1 -= .5; }
+  let [fg, bg] = [st.fg, st.bg]; if (st.inverse) [fg, bg] = [bg, fg];
+  return `top:calc(${r0}*1.25em);left:${c0}ch;width:${c1 - c0}ch;height:calc(${r1 - r0}*1.25em);color:${col(fg, "default-fg")};` +
+    ((bg && bg !== "default") || st.inverse ? `background:${col(bg, "default-bg")};` : "") + (st.bold ? "font-weight:700;" : "");
+}
+function render(id, scope, faithful) {
+  const c = surf.components[id]; if (!c) return "";
+  const st0 = resolve(c.style);  // component style is bound into the data model (/s/<id>)
+  const placed = faithful && st0 && st0.area;
+  const a = placed ? ` data-id="${esc(id)}" style="${place(c, st0)}"` : "";
+  const inner = children(c, scope).map(([i, s]) => render(i, s, faithful)).join("");
+  const tone = c.tone ? ` data-tone="${c.tone}"` : "";
+  switch (c.component) {
+    case "Text": {
+      const txt = esc(resolve(c.text, scope)), sel = resolve(c.highlight, scope);
+      if (scope !== undefined && faithful) {
+        const st = c.style || {}, fg = resolve(st.fg, scope), bg = resolve(st.bg, scope), b = resolve(st.bold, scope);
+        const css = (fg && fg !== "default" ? `color:var(--${fg});` : "") + (bg && bg !== "default" ? `background:var(--${bg});` : "") + (b ? "font-weight:700;" : "");
+        return `<span class="row-item${sel ? " sel" : ""}" style="${css}">${txt}</span>`;
+      }
+      return `<div${a} class="Text ${c.variant || "body"}${sel ? " sel" : ""}"${tone}>${txt}</div>`;
+    }
+    case "TextField": return `<span${a} class="TextField">${esc(resolve(c.value, scope))}▏</span>`;
+    case "Progress": { const v = resolve(c.value, scope); return `<div class="Progress"><progress value="${v ?? 0}" max="1"></progress>${v == null ? "" : Math.round(v * 100) + "%"} ${esc(resolve(c.label, scope))}</div>`; }
+    case "Button": { const k = resolve(c.shortcut, scope); return `<span class="Button">${k ? `<kbd>${esc(k)}</kbd>` : ""}${inner}</span>`; }
+    case "Divider": return `<div${a} class="Divider"></div>`;
+    case "Card": return faithful ? `<div${a} class="card-frame"></div><div class="flow">${inner}</div>` : `<div class="Card">${inner}</div>`;
+    default: return faithful && !placed ? `<div class="flow">${inner}</div>` : `<div${a} class="${c.component}">${inner}</div>`;
+  }
+}
+function draw() {
+  const faithful = $("mode").value === "faithful" && surf.theme;
+  const body = render("root", undefined, !!faithful);
+  if (faithful) {
+    const t = surf.theme, vars = Object.entries(t.palette).map(([k, v]) => `--${k}:${v}`).join(";");
+    $("stage").innerHTML = `<div class="a2ui-term" style="${vars};width:${t.grid.cols}ch;height:calc(${t.grid.rows}*1.25em);background:var(--default-bg);color:var(--default-fg)">${body}</div>`;
+  } else $("stage").innerHTML = `<div class="a2ui-native">${body}</div>`;
+}
+function seek(n) {
+  surf = { components: {}, data: {}, theme: null };
+  for (let i = 0; i < n; i++) apply(msgs[i]);
+  pos = n; $("seek").value = n; draw();
+  const bytes = msgs.slice(0, n).reduce((s, m) => s + JSON.stringify(m).length, 0);
+  $("stat").textContent = `msg ${n}/${msgs.length} · ${(bytes / 1024).toFixed(1)} KiB streamed`;
+  const tail = msgs.slice(Math.max(0, n - 30), n).map((m) => {
+    const k = Object.keys(m).find((x) => x !== "version"), cls = k === "updateComponents" ? "cmp" : k === "updateDataModel" ? "data" : "surf";
+    return `<span class="${cls}">${esc(JSON.stringify(m).slice(0, 300))}</span>`;
+  });
+  $("log").innerHTML = tail.join("\n");
+  $("log").scrollTop = 1e9;
+}
+function load(text) {
+  msgs = text.split("\n").filter((l) => l.trim()).map((l) => JSON.parse(l));
+  $("seek").max = msgs.length; seek(Math.min(msgs.length, 1));
+}
+$("file").onchange = async (e) => load(await e.target.files[0].text());
+$("seek").oninput = (e) => seek(+e.target.value);
+$("mode").onchange = draw;
+$("play").onclick = () => {
+  if (timer) { clearInterval(timer); timer = null; $("play").textContent = "▶ play"; return; }
+  $("play").textContent = "❚❚ pause";
+  timer = setInterval(() => { if (pos >= msgs.length) { $("play").click(); return; } seek(pos + 1); }, 120);
+};
+const src = new URLSearchParams(location.search).get("src");
+if (src) fetch(src).then((r) => r.text()).then(load);
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+{
+  "$comment": "phosphene vttui catalog v0.1: the A2UI v0.9.1 basic catalog plus terminal-derived extensions. Renderers that only know the basic catalog can ignore unknown props.",
+  "extends": "https://a2ui.org/specification/v0_9_1/catalogs/basic/catalog.json",
+  "components": {
+    "Progress": {
+      "description": "Determinate progress (bars, gauges, meters). value is 0..1 or null when indeterminate (spinner).",
+      "properties": {
+        "value": {"oneOf": [{"type": "number"}, {"type": "null"}, {"$ref": "#/definitions/binding"}]},
+        "label": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/binding"}]}
+      }
+    }
+  },
+  "commonProperties": {
+    "style": {
+      "description": "Faithful-render hints from the source terminal.",
+      "type": "object",
+      "properties": {
+        "area": {"type": "array", "items": {"type": "integer"}, "minItems": 4, "maxItems": 4, "description": "[row0, col0, row1, col1) in terminal cells"},
+        "fg": {"description": "palette token: ansi-0..ansi-15 | default", "oneOf": [{"type": "string"}, {"$ref": "#/definitions/binding"}]},
+        "bg": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/binding"}]},
+        "bold": {"oneOf": [{"type": "boolean"}, {"$ref": "#/definitions/binding"}]},
+        "inverse": {"type": "boolean"}
+      }
+    },
+    "tone": {"enum": ["bar", "error", "muted", "prompt"], "description": "semantic emphasis for Text"},
+    "highlight": {"description": "Text: true when the terminal shows this item selected", "oneOf": [{"type": "boolean"}, {"$ref": "#/definitions/binding"}]},
+    "shortcut": {"description": "Button: the terminal key that triggers it (e.g. ^X, F1, q)", "oneOf": [{"type": "string"}, {"$ref": "#/definitions/binding"}]},
+    "role": {"description": "List: the VTM role of the region (log, table, code, ...)", "type": "string"}
+  },
+  "textVariants": ["h3", "h4", "body", "caption", "code"],
+  "theme": {
+    "grid": {"rows": "integer", "cols": "integer"},
+    "palette": "map of ansi-0..ansi-15, default-fg, default-bg -> CSS colour",
+    "font": {"family": "string", "cellWidth": "1ch", "lineHeight": "number (em)"}
+  },
+  "definitions": {
+    "binding": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"], "additionalProperties": false}
+  }
+}

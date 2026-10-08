@@ -1,0 +1,20 @@
+[project]
+name = "phosphene"
+version = "0.1.0"
+description = "Virtual Terminal Model: learn to turn VT/TUI byte streams into incremental A2UI streams"
+requires-python = ">=3.10"
+dependencies = ["vtcore", "vttui", "vtm"]
+
+[tool.uv.workspace]
+members = ["packages/vtcore", "packages/vttui", "packages/vtm"]
+
+[tool.uv.sources]
+vtcore = { workspace = true }
+vttui = { workspace = true }
+vtm = { workspace = true }
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
