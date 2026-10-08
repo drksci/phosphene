@@ -19,7 +19,8 @@ from vtcore.roles import ROLE_ID, ROLES
 from .style import line_style, region_style
 
 R = ROLE_ID
-LINE_ROLES = {R[r] for r in ("text", "log", "error", "code", "table", "menu_item", "selected")}
+RAW = len(ROLES)  # pseudo-role for not-yet-understood cells: emitted as a Terminal (styled cell grid)
+LINE_ROLES = {R[r] for r in ("text", "log", "error", "code", "table", "menu_item", "selected")} | {RAW}
 LISTISH = {R[r] for r in ("menu_item", "table", "text", "code", "log")}
 TEXT_VARIANT = {"text": "body", "log": "code", "error": "body", "code": "code", "table": "code", "menu_item": "body"}
 TONE = {"error": "error", "log": "muted"}
@@ -39,7 +40,7 @@ class Region:
 
     @property
     def name(self) -> str:
-        return "box" if self.role == R["border"] else ROLES[self.role]
+        return "box" if self.role == R["border"] else "raw" if self.role == RAW else ROLES[self.role]
 
     def contains(self, o: "Region") -> bool:
         return self.top <= o.top and self.bottom >= o.bottom and self.left <= o.left and self.right >= o.right and self is not o
@@ -210,6 +211,23 @@ def _progress(text: str, f: Frame, row: int, c0: int, c1: int) -> float | None:
     return None
 
 
+def _runs(f: Frame, row: int, c0: int, c1: int) -> list[dict]:
+    """Styled text runs of one row span: what a client needs to draw cells without a VT parser."""
+    out, c = [], c0
+    while c < c1:
+        e = c + 1
+        while e < c1 and (f.fg[row, e], f.bg[row, e], f.attr[row, e]) == (f.fg[row, c], f.bg[row, c], f.attr[row, c]):
+            e += 1
+        run = {"t": "".join(chr(x) for x in f.cp[row, c:e] if x)}
+        st = line_style(f, row, c, e)
+        run.update({k: v for k, v in st.items() if v not in ("default", False)})
+        if f.attr[row, c] & 8:
+            run["inv"] = True
+        out.append(run)
+        c = e
+    return out
+
+
 def _hints(text: str) -> list[dict]:
     items = [{"key": k.strip(), "label": l.strip()} for k, l in RE_HINT.findall(text) if l.strip()]
     if not items:
@@ -241,6 +259,10 @@ class Emitter:
             return self.add("root", "Column", children=self._bands(n.children))
         if n.key == "divider" or (n.role == R["border"] and n.top == n.bottom):
             return self.add(k, "Divider", axis="horizontal")
+        if n.role == RAW:
+            rows = [{"col": a, "runs": _runs(f, r, a, b)} for r, a, b, _ in n.lines]
+            self.data[k] = {"rows": rows}
+            return self.add(k, "Terminal", rows={"path": f"/r/{k}/rows"})
         if n.role == R["border"]:
             kids = self._bands(n.children)
             if n.title is not None:
@@ -286,10 +308,15 @@ class Emitter:
             return self.add(k, "Row", children={"path": f"/r/{k}/items", "componentId": btn})
         # line-oriented regions -> List with an item template; one data entry per terminal line
         rows = [{"text": _span_text(f, r, a, b), "selected": sel, **line_style(f, r, a, b)} for r, a, b, sel in n.lines]
+        selectable = role in ("menu_item", "table") and any(sel for *_, sel in n.lines)
+        if selectable:  # row index lets a click become "move selection to row i" keystrokes
+            for i, row in enumerate(rows):
+                row["i"] = i
         self.data[k] = {"rows": rows}
+        extra = {"action": {"event": {"name": "select", "context": {"list": k, "row": {"path": "i"}}}}} if selectable else {}
         tpl = self.add(f"{k}:row", "Text", text={"path": "text"}, variant=TEXT_VARIANT.get(role, "body"),
                        highlight={"path": "selected"}, style={"fg": {"path": "fg"}, "bg": {"path": "bg"}, "bold": {"path": "bold"}},
-                       **({"tone": TONE[role]} if role in TONE else {}))
+                       **({"tone": TONE[role]} if role in TONE else {}), **extra)
         return self.add(k, "List", children={"path": f"/r/{k}/rows", "componentId": tpl}, role=role)
 
     def _bands(self, children: list[Region]) -> list[str]:

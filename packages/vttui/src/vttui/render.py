@@ -157,6 +157,15 @@ class Surface:
                 return f'<span class="row-item{" sel" if sel else ""}" style="{css}">{txt}</span>'
             cls = f'Text {c.get("variant", "body")}{" sel" if sel else ""}'
             return f'<div{attr} class="{cls}"{f" data-tone={tone}" if tone else ""}>{txt}</div>'
+        if kind == "Terminal":  # not-yet-understood region: styled cell runs, drawn verbatim
+            lines = []
+            for row in self.resolve(c.get("rows"), scope) or []:
+                spans = "".join(
+                    f'<span style="{"color:var(--" + r["fg"] + ");" if r.get("fg") else ""}'
+                    f'{"background:var(--" + r["bg"] + ");" if r.get("bg") else ""}{"font-weight:700;" if r.get("bold") else ""}'
+                    f'{"filter:invert(1);" if r.get("inv") else ""}">{html.escape(r["t"])}</span>' for r in row["runs"])
+                lines.append(f'<div style="padding-left:{row["col"]}ch">{spans}</div>')
+            return f'<div{attr} class="Terminal" style="font-family:ui-monospace,monospace;white-space:pre">{"".join(lines)}</div>'
         if kind == "TextField":
             val = html.escape(str(self.resolve(c.get("value"), scope) or ""))
             return f'<span{attr} class="TextField">{val}<span class="caret">▏</span></span>'
