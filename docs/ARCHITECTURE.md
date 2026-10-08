@@ -63,7 +63,36 @@ children in React: the structure stays stable while the content changes.
 **Style layer** (`style.py`): per-component `area` (in cells), palette tokens and bold/inverse,
 plus a theme (palette, grid, font metrics) and a CSS generator for the faithful renderer.
 
-## 4. Verification
+## 4. Gateway: progressive locking (`vttui/gateway.py`)
+
+The deployment shape is a **server-side gateway**. Clients render A2UI only and never parse VT.
+The model is a *matcher* called when the layout is new, not on every frame.
+
+```
+RAW ──settled keyframe──▶ MATCHING ──regions stable for N keyframes──▶ LOCKED
+ ▲      (template-cache hit → LOCKED immediately, no model call)        │
+ └──────── resize ◀──────────── DRIFT (ink outside slots / frame edge broken) ┘
+```
+
+- **RAW / partial.** Cells the gateway doesn't understand yet are emitted as a `Terminal` component:
+  styled cell runs per row, already parsed on the server. The UI upgrades region by region as regions
+  stay stable across `lock_after` keyframes (region identity = role + top-left corner).
+- **LOCKED.** A `Template` is a slot map: the role each cell takes when it has ink, plus fill areas for
+  bars and gauges. Per frame, `apply_template` slices the grid with no model call; it re-derives list
+  selection from highlight attributes, and list and log slots have room to grow. The reconciler then emits
+  `updateDataModel` patches only.
+- **DRIFT.** Ink outside every slot, or a changed frame edge, sends only the drifted cells back to raw,
+  and the screen re-matches (asynchronously in production).
+- **Template cache.** Templates are keyed by layout fingerprint (`TemplateCache`). Persist it per app,
+  and a second htop/vim session locks with no model call at all.
+- **Return path.** `Gateway.action()` maps client events to keystrokes: `key` (Button shortcut: `^X`,
+  `F1`, `M-x`, `[ OK ]` …), `select` (list row → arrow keys from the current selection), and `edit`
+  (TextField old → new value → minimal edit keys, `\r` on submit). See `vttui/keys.py`.
+
+Metrics (`Gateway.stats`): share of keyframes served locked, model calls per keyframe, drift events,
+structural updates and A2UI bytes. Notebook 04 reports them on real recordings.
+
+## 5. Verification
 
 `tests/` checks that, for every synthetic scene, applying the incremental stream to an empty
 surface reproduces exactly the components and data of a full compile. In other words, the delta
