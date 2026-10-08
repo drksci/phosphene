@@ -1,0 +1,25 @@
+{"id": "f16", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 24, "c1": 79}, {"role": "status_bar", "r0": 25, "c0": 0, "r1": 25, "c1": 79}]}
+{"id": "f18", "app": "repl", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 2, "c1": 4}, {"role": "input", "r0": 0, "c0": 5, "r1": 2, "c1": 79}]}
+{"id": "f20", "app": "repl", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 7, "c1": 4}, {"role": "input", "r0": 0, "c0": 5, "r1": 7, "c1": 79}]}
+{"id": "f22", "app": "repl", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 11, "c1": 4}, {"role": "input", "r0": 0, "c0": 5, "r1": 11, "c1": 79}]}
+{"id": "f23", "app": "repl", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 12, "c1": 4}, {"role": "input", "r0": 0, "c0": 5, "r1": 12, "c1": 79}]}
+{"id": "f42", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 3}]}
+{"id": "f43", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 3}, {"role": "input", "r0": 0, "c0": 4, "r1": 0, "c1": 79}]}
+{"id": "f45", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 21, "c1": 79}, {"role": "status_bar", "r0": 22, "c0": 0, "r1": 22, "c1": 79}, {"role": "prompt", "r0": 23, "c0": 0, "r1": 23, "c1": 3}, {"role": "text", "r0": 23, "c0": 4, "r1": 23, "c1": 79}]}
+{"id": "f46", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 2, "c1": 69}]}
+{"id": "f47", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 2, "c1": 69}]}
+{"id": "f48", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 2, "c1": 69}]}
+{"id": "f49", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 2, "c1": 69}]}
+{"id": "f50", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 2, "c1": 69}]}
+{"id": "f53", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 3, "c1": 69}]}
+{"id": "f55", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 4, "c1": 69}]}
+{"id": "f56", "app": "editor", "regions": [{"role": "code", "r0": 1, "c0": 0, "r1": 5, "c1": 69}, {"role": "text", "r0": 0, "c0": 0, "r1": 0, "c1": 11}]}
+{"id": "f57", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 4, "c1": 69}]}
+{"id": "f58", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 4, "c1": 69}]}
+{"id": "f113", "app": "installer", "regions": [{"role": "log", "r0": 0, "c0": 0, "r1": 22, "c1": 91}, {"role": "progress", "r0": 0, "c0": 1, "r1": 23, "c1": 1}]}
+{"id": "f117", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 9}, {"role": "input", "r0": 0, "c0": 10, "r1": 0, "c1": 91}]}
+{"id": "f129", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 9}, {"role": "input", "r0": 0, "c0": 10, "r1": 0, "c1": 91}]}
+{"id": "f140", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 16}, {"role": "prompt", "r0": 1, "c0": 0, "r1": 1, "c1": 1}, {"role": "input", "r0": 1, "c0": 2, "r1": 1, "c1": 84}]}
+{"id": "f152", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 16}, {"role": "prompt", "r0": 1, "c0": 0, "r1": 1, "c1": 1}, {"role": "input", "r0": 1, "c0": 2, "r1": 1, "c1": 84}, {"role": "prompt", "r0": 2, "c0": 0, "r1": 2, "c1": 13}]}
+{"id": "f217", "app": "shell", "regions": [{"role": "text", "r0": 1, "c0": 0, "r1": 4, "c1": 115}, {"role": "text", "r0": 6, "c0": 0, "r1": 12, "c1": 115}, {"role": "text", "r0": 14, "c0": 0, "r1": 20, "c1": 115}, {"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 9}, {"role": "input", "r0": 0, "c0": 10, "r1": 0, "c1": 115}, {"role": "prompt", "r0": 5, "c0": 0, "r1": 5, "c1": 9}, {"role": "input", "r0": 5, "c0": 10, "r1": 5, "c1": 115}, {"role": "prompt", "r0": 13, "c0": 0, "r1": 13, "c1": 9}, {"role": "input", "r0": 13, "c0": 10, "r1": 13, "c1": 115}, {"role": "prompt", "r0": 21, "c0": 0, "r1": 21, "c1": 9}]}
+{"id": "f257", "app": "shell", "regions": [{"role": "status_bar", "r0": 0, "c0": 0, "r1": 0, "c1": 111}, {"role": "table", "r0": 1, "c0": 0, "r1": 6, "c1": 111}, {"role": "text", "r0": 9, "c0": 0, "r1": 13, "c1": 111}, {"role": "table", "r0": 15, "c0": 0, "r1": 22, "c1": 111}, {"role": "text", "r0": 24, "c0": 0, "r1": 28, "c1": 111}, {"role": "table", "r0": 30, "c0": 0, "r1": 40, "c1": 111}, {"role": "prompt", "r0": 7, "c0": 0, "r1": 8, "c1": 1}, {"role": "input", "r0": 7, "c0": 2, "r1": 8, "c1": 111}, {"role": "prompt", "r0": 14, "c0": 0, "r1": 14, "c1": 1}, {"role": "input", "r0": 14, "c0": 2, "r1": 14, "c1": 111}, {"role": "prompt", "r0": 23, "c0": 0, "r1": 23, "c1": 1}, {"role": "input", "r0": 23, "c0": 2, "r1": 23, "c1": 111}, {"role": "prompt", "r0": 29, "c0": 0, "r1": 29, "c1": 1}, {"role": "input", "r0": 29, "c0": 2, "r1": 29, "c1": 111}, {"role": "prompt", "r0": 41, "c0": 0, "r1": 41, "c1": 1}]}

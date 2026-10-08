@@ -1,0 +1,25 @@
+{"id": "f601", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 0, "c1": 2}, {"role": "code", "r0": 1, "c0": 0, "r1": 17, "c1": 0}, {"role": "menu_item", "r0": 18, "c0": 0, "r1": 27, "c1": 60}, {"role": "status_bar", "r0": 28, "c0": 0, "r1": 28, "c1": 60}]}
+{"id": "f602", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 21, "c1": 25}, {"role": "code", "r0": 22, "c0": 0, "r1": 27, "c1": 0}, {"role": "status_bar", "r0": 28, "c0": 0, "r1": 28, "c1": 60}]}
+{"id": "f612", "app": "editor", "regions": [{"role": "code", "r0": 0, "c0": 0, "r1": 17, "c1": 25}, {"role": "menu_item", "r0": 18, "c0": 0, "r1": 27, "c1": 60}, {"role": "status_bar", "r0": 28, "c0": 0, "r1": 28, "c1": 60}]}
+{"id": "f654", "app": "shell", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 55, "c1": 75}, {"role": "prompt", "r0": 56, "c0": 0, "r1": 56, "c1": 18}, {"role": "input", "r0": 56, "c0": 20, "r1": 56, "c1": 24}]}
+{"id": "f655", "app": "shell", "regions": [{"role": "text", "r0": 33, "c0": 0, "r1": 55, "c1": 64}]}
+{"id": "f656", "app": "shell", "regions": [{"role": "text", "r0": 27, "c0": 0, "r1": 55, "c1": 64}]}
+{"id": "f666", "app": "pager", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 23, "c1": 79}, {"role": "title", "r0": 0, "c0": 0, "r1": 0, "c1": 77}, {"role": "title", "r0": 4, "c0": 0, "r1": 4, "c1": 3}, {"role": "title", "r0": 7, "c0": 0, "r1": 7, "c1": 7}, {"role": "title", "r0": 13, "c0": 0, "r1": 13, "c1": 10}, {"role": "status_bar", "r0": 24, "c0": 0, "r1": 24, "c1": 0}]}
+{"id": "f667", "app": "pager", "regions": [{"role": "text", "r0": 3, "c0": 0, "r1": 21, "c1": 79}, {"role": "title", "r0": 3, "c0": 0, "r1": 3, "c1": 3}, {"role": "title", "r0": 6, "c0": 0, "r1": 6, "c1": 7}, {"role": "title", "r0": 12, "c0": 0, "r1": 12, "c1": 10}, {"role": "status_bar", "r0": 24, "c0": 0, "r1": 24, "c1": 0}]}
+{"id": "f668", "app": "pager", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 23, "c1": 79}, {"role": "title", "r0": 10, "c0": 0, "r1": 10, "c1": 6}, {"role": "status_bar", "r0": 24, "c0": 0, "r1": 24, "c1": 0}]}
+{"id": "f669", "app": "pager", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 23, "c1": 79}, {"role": "status_bar", "r0": 24, "c0": 0, "r1": 24, "c1": 0}]}
+{"id": "f670", "app": "pager", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 23, "c1": 79}, {"role": "status_bar", "r0": 24, "c0": 0, "r1": 24, "c1": 0}]}
+{"id": "f672", "app": "pager", "regions": [{"role": "text", "r0": 1, "c0": 0, "r1": 23, "c1": 79}, {"role": "status_bar", "r0": 24, "c0": 0, "r1": 24, "c1": 0}]}
+{"id": "f676", "app": "shell", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 48, "c1": 107}]}
+{"id": "f678", "app": "shell", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 48, "c1": 90}]}
+{"id": "f679", "app": "shell", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 48, "c1": 111}]}
+{"id": "f680", "app": "shell", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 48, "c1": 111}]}
+{"id": "f681", "app": "shell", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 48, "c1": 82}]}
+{"id": "f682", "app": "shell", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 48, "c1": 82}]}
+{"id": "f687", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 9}, {"role": "input", "r0": 0, "c0": 10, "r1": 0, "c1": 90}]}
+{"id": "f688", "app": "shell", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 56, "c1": 76}]}
+{"id": "f689", "app": "shell", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 55, "c1": 81}, {"role": "prompt", "r0": 56, "c0": 0, "r1": 56, "c1": 8}]}
+{"id": "f690", "app": "shell", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 55, "c1": 81}, {"role": "prompt", "r0": 56, "c0": 0, "r1": 56, "c1": 9}, {"role": "input", "r0": 56, "c0": 10, "r1": 56, "c1": 38}]}
+{"id": "f691", "app": "shell", "regions": [{"role": "text", "r0": 0, "c0": 0, "r1": 54, "c1": 81}, {"role": "prompt", "r0": 55, "c0": 0, "r1": 55, "c1": 9}, {"role": "input", "r0": 55, "c0": 10, "r1": 55, "c1": 38}]}
+{"id": "f697", "app": "shell", "regions": [{"role": "log", "r0": 0, "c0": 0, "r1": 55, "c1": 129}]}
+{"id": "f699", "app": "shell", "regions": [{"role": "prompt", "r0": 0, "c0": 0, "r1": 0, "c1": 9}, {"role": "input", "r0": 0, "c0": 10, "r1": 0, "c1": 90}]}

@@ -9,3 +9,4 @@ data/
 *.pt
 .ipynb_checkpoints/
 .DS_Store
+!labels/**/*.npz
