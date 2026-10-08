@@ -32,7 +32,7 @@ ROLE_GUIDE = """\
 blank: empty background (never emit)
 text: plain program output / prose
 prompt: the shell or REPL prompt prefix only (e.g. "user@host:~$ ", "❯ ", ">>> ")
-input: text being typed at the active prompt or into a form field (usually the cursor row)
+input: the command typed after a prompt (on the active row AND on earlier history rows), or text in a form field
 border: box-drawing frames, separators, rules (┌─┐ │ +---+ =====)
 title: headings, panel/window titles (including titles embedded in a frame's top edge)
 status_bar: full-width highlighted bar at top/bottom; mode lines; pager status (":", "(END)")
@@ -41,8 +41,8 @@ selected: the currently highlighted/selected item or row
 table: column-aligned tabular rows (incl. header row), `ls` column listings
 progress: progress bars, gauges, meters, spinners, percentages, transfer rates
 code: source code / editor buffer, line-number gutters, vim "~" filler rows
-log: timestamped or level-prefixed log lines
-error: errors, warnings, tracebacks, failure messages
+log: timestamped or level-prefixed log lines (a stream of "WARN ..."/"warning ..." lines is log)
+error: standalone error/failure messages and tracebacks (e.g. "Error: ...", "command not found", stack traces)
 key_hint: key bindings, shortcuts, buttons ("^X Exit", "F1Help", "<  OK  >", "[ Cancel ]", "q quit")"""
 
 SYSTEM = f"""You label terminal screenshots for training a UI-segmentation model.
@@ -137,6 +137,15 @@ def rasterize(regions: list[dict], shape: tuple[int, int], f: Frame | None = Non
     if f is not None:
         blank = (f.cp == 32) & ~np.isin(roles, list(FILL_ROLES))
         roles[blank] = 0
+        # input owns whitespace only up to the end of the typed text (or the cursor on its row)
+        inp = ROLE_ID["input"]
+        for r in np.nonzero((roles == inp).any(1))[0]:
+            ink = np.nonzero((f.cp[r] != 32) & (roles[r] == inp))[0]
+            end = ink.max() + 1 if ink.size else 0
+            if f.cursor[0] == r:
+                end = max(end, f.cursor[1] + 1)
+            tail = np.arange(w) >= end
+            roles[r, tail & (roles[r] == inp)] = 0
         # any ink the LLM forgot to cover: plain text
         roles[(f.cp != 32) & (roles == 0)] = ROLE_ID["text"]
     return roles

@@ -126,3 +126,13 @@ def test_layout_signature_wide_terminal():
     vt = VT(300, 4)
     vt.feed("x" * 10)
     assert layout_signature(vt.snapshot())
+
+
+def test_rasterize_clips_input_fill():
+    vt = VT(30, 3)
+    vt.feed("$ ls\r\n$ ")
+    f = vt.snapshot()
+    r = rasterize([{"role": "prompt", "r0": 0, "c0": 0, "r1": 1, "c1": 0},
+                   {"role": "input", "r0": 0, "c0": 2, "r1": 1, "c1": 29}], f.shape, f)
+    assert (r[0, 2:4] == ROLE_ID["input"]).all() and (r[0, 4:] == 0).all()
+    assert r[1, 2] == ROLE_ID["input"] and (r[1, 3:] == 0).all()
